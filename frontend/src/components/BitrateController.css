@@ -1,0 +1,612 @@
+/* 비트레이트 컨트롤러 스타일 */
+.bitrate-controller {
+  background: rgba(0, 0, 0, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 20px;
+  backdrop-filter: blur(10px);
+  color: white;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  min-width: 350px;
+  max-width: 500px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.bitrate-controller.compact {
+  padding: 15px;
+  min-width: 280px;
+}
+
+.bitrate-controller.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 40px;
+}
+
+.loading-spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top: 2px solid var(--rf-primary-blue);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+/* 헤더 */
+.bitrate-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.header-left h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: white;
+}
+
+.camera-id {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.6);
+  margin-top: 4px;
+}
+
+.quality-indicator {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.quality-indicator .indicator-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+  animation: pulse 2s infinite;
+}
+
+.quality-indicator.excellent {
+  background: rgba(0, 255, 0, 0.1);
+  color: #00ff00;
+  border: 1px solid rgba(0, 255, 0, 0.3);
+}
+
+.quality-indicator.good {
+  background: rgba(0, 255, 255, 0.1);
+  color: #00ffff;
+  border: 1px solid rgba(0, 255, 255, 0.3);
+}
+
+.quality-indicator.fair {
+  background: rgba(255, 255, 0, 0.1);
+  color: #ffff00;
+  border: 1px solid rgba(255, 255, 0, 0.3);
+}
+
+.quality-indicator.poor {
+  background: rgba(255, 0, 0, 0.1);
+  color: #ff0000;
+  border: 1px solid rgba(255, 0, 0, 0.3);
+}
+
+/* 메인 컨트롤 */
+.bitrate-main-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+/* 비트레이트 슬라이더 */
+.bitrate-slider-container {
+  width: 100%;
+}
+
+.slider-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.slider-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.bitrate-display {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.current-bitrate {
+  font-size: 18px;
+  font-weight: bold;
+  color: var(--rf-primary-blue);
+}
+
+.max-bitrate {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.percentage {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.5);
+  margin-left: 8px;
+}
+
+.slider-wrapper {
+  position: relative;
+  margin-bottom: 8px;
+}
+
+.bitrate-slider {
+  width: 100%;
+  height: 6px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.1);
+  outline: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.bitrate-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--rf-primary-blue);
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 198, 255, 0.3);
+  transition: all 0.3s ease;
+}
+
+.bitrate-slider::-webkit-slider-thumb:hover {
+  background: #00c6ff;
+  box-shadow: 0 4px 16px rgba(0, 198, 255, 0.5);
+  transform: scale(1.1);
+}
+
+.bitrate-slider::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--rf-primary-blue);
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 2px 8px rgba(0, 198, 255, 0.3);
+  transition: all 0.3s ease;
+}
+
+.bitrate-slider::-moz-range-thumb:hover {
+  background: #00c6ff;
+  box-shadow: 0 4px 16px rgba(0, 198, 255, 0.5);
+  transform: scale(1.1);
+}
+
+.bitrate-slider::-webkit-slider-track {
+  background: linear-gradient(to right, #ff4444 0%, #ffaa00 50%, #00ff00 100%);
+  height: 6px;
+  border-radius: 3px;
+}
+
+.bitrate-slider::-moz-range-track {
+  background: linear-gradient(to right, #ff4444 0%, #ffaa00 50%, #00ff00 100%);
+  height: 6px;
+  border-radius: 3px;
+  border: none;
+}
+
+.slider-markers {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 8px;
+}
+
+.marker {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.5);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* 레이턴시 표시 */
+.latency-display {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  padding: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.latency-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.latency-label {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.latency-value {
+  font-size: 24px;
+  font-weight: bold;
+  color: var(--rf-primary-blue);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.latency-chart {
+  width: 100%;
+  height: 40px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 4px;
+  margin-bottom: 12px;
+  overflow: hidden;
+}
+
+.latency-chart svg {
+  width: 100%;
+  height: 100%;
+}
+
+.latency-stats {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.6);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* 품질 프리셋 */
+.quality-presets {
+  margin-bottom: 20px;
+}
+
+.presets-label {
+  display: block;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.9);
+  margin-bottom: 12px;
+}
+
+.preset-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.preset-btn {
+  flex: 1;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.preset-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.preset-btn.active {
+  background: var(--rf-primary-blue);
+  border-color: var(--rf-primary-blue);
+  color: white;
+  box-shadow: 0 2px 8px rgba(0, 198, 255, 0.3);
+}
+
+/* 고급 설정 */
+.advanced-controls {
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding-top: 20px;
+}
+
+.advanced-toggle {
+  width: 100%;
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 14px;
+  cursor: pointer;
+  padding: 8px 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: color 0.3s ease;
+}
+
+.advanced-toggle:hover {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.advanced-panel {
+  overflow: hidden;
+  margin-top: 16px;
+}
+
+/* 적응적 조정 */
+.adaptive-control {
+  margin-bottom: 20px;
+}
+
+.adaptive-label {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.adaptive-label input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: var(--rf-primary-blue);
+}
+
+.adaptive-description {
+  display: block;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.6);
+  margin-top: 8px;
+  margin-left: 30px;
+}
+
+/* 품질 메트릭 */
+.quality-metrics {
+  margin-bottom: 20px;
+}
+
+.metrics-header {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.9);
+  margin-bottom: 12px;
+}
+
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.metric {
+  background: rgba(255, 255, 255, 0.05);
+  padding: 12px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.metric-label {
+  display: block;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.6);
+  margin-bottom: 4px;
+}
+
+.metric-value {
+  font-size: 14px;
+  font-weight: bold;
+  color: var(--rf-primary-blue);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* 리셋 컨트롤 */
+.reset-controls {
+  display: flex;
+  justify-content: center;
+}
+
+.reset-btn {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.8);
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.reset-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.3);
+  color: white;
+}
+
+/* 컴팩트 모드 */
+.bitrate-controller.compact .bitrate-header {
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+}
+
+.bitrate-controller.compact .header-left h3 {
+  font-size: 14px;
+}
+
+.bitrate-controller.compact .bitrate-main-controls {
+  gap: 15px;
+  margin-bottom: 15px;
+}
+
+.bitrate-controller.compact .latency-display {
+  padding: 12px;
+}
+
+.bitrate-controller.compact .latency-value {
+  font-size: 20px;
+}
+
+.bitrate-controller.compact .metrics-grid {
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+
+.bitrate-controller.compact .metric {
+  padding: 8px;
+}
+
+/* 애니메이션 */
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+  .bitrate-controller {
+    min-width: 280px;
+    max-width: 100%;
+    padding: 16px;
+  }
+  
+  .bitrate-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  
+  .bitrate-display {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+  }
+  
+  .current-bitrate {
+    font-size: 16px;
+  }
+  
+  .latency-value {
+    font-size: 20px;
+  }
+  
+  .preset-buttons {
+    flex-direction: column;
+    gap: 6px;
+  }
+  
+  .metrics-grid {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  .bitrate-controller {
+    min-width: 250px;
+    padding: 12px;
+  }
+  
+  .slider-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  
+  .bitrate-display {
+    align-self: flex-end;
+  }
+  
+  .latency-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  
+  .latency-value {
+    font-size: 18px;
+  }
+  
+  .latency-stats {
+    flex-direction: column;
+    gap: 4px;
+  }
+}
+
+/* 고대비 모드 */
+@media (prefers-contrast: high) {
+  .bitrate-controller {
+    background: #000;
+    border: 2px solid #fff;
+  }
+  
+  .bitrate-slider {
+    background: #fff;
+  }
+  
+  .bitrate-slider::-webkit-slider-thumb {
+    background: #fff;
+    box-shadow: 0 0 0 2px #000;
+  }
+  
+  .preset-btn {
+    background: #000;
+    border: 2px solid #fff;
+    color: #fff;
+  }
+  
+  .preset-btn.active {
+    background: #fff;
+    color: #000;
+  }
+}
+
+/* 모션 축소 */
+@media (prefers-reduced-motion: reduce) {
+  .bitrate-controller *,
+  .bitrate-controller *::before,
+  .bitrate-controller *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  
+  .quality-indicator .indicator-dot {
+    animation: none;
+  }
+}
+
+/* 인쇄 스타일 */
+@media print {
+  .bitrate-controller {
+    background: white;
+    color: black;
+    border: 1px solid black;
+  }
+  
+  .bitrate-slider,
+  .preset-btn,
+  .reset-btn {
+    display: none;
+  }
+}

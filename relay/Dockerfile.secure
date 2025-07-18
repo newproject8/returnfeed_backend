@@ -1,0 +1,39 @@
+# Use slim Python image for smaller size
+FROM python:3.9-slim
+
+# Install security updates
+RUN apt-get update && \
+    apt-get upgrade -y && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# Create non-root user
+RUN groupadd -r relay && \
+    useradd -r -g relay -d /app -s /sbin/nologin relay
+
+# Set working directory
+WORKDIR /app
+
+# Install Python dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt && \
+    pip install --no-cache-dir websockets PyJWT
+
+# Copy application files
+COPY --chown=relay:relay main.py .
+COPY --chown=relay:relay relay_server.py .
+COPY --chown=relay:relay relay_server_secure.py .
+COPY --chown=relay:relay main_secure.py .
+
+# Make main_secure.py executable
+RUN chmod +x main_secure.py
+
+# Switch to non-root user
+USER relay
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+    CMD python -c "import websockets, asyncio; asyncio.run(websockets.connect('ws://localhost:8765').close())" || exit 1
+
+# Run the secure version by default
+CMD ["python", "-u", "main_secure.py"]

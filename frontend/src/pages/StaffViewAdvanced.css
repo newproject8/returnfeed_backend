@@ -1,0 +1,666 @@
+/* Staff View Advanced 스타일 */
+.staff-view-advanced {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #000;
+  color: white;
+}
+
+/* 로딩 화면 */
+.staff-view-loading {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  background: #000;
+  color: white;
+}
+
+.staff-view-loading .loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-top: 3px solid var(--rf-primary-blue);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 20px;
+}
+
+.staff-view-loading p {
+  font-size: 16px;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* 오류 화면 */
+.staff-view-error {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  background: #000;
+  color: white;
+  text-align: center;
+  padding: 40px;
+}
+
+.staff-view-error h2 {
+  font-size: 24px;
+  margin-bottom: 16px;
+  color: var(--rf-tally-red);
+}
+
+.staff-view-error p {
+  font-size: 16px;
+  margin-bottom: 24px;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* 연결 상태 오버레이 */
+.connection-status-overlay {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  z-index: 200;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(10px);
+  border-radius: 20px;
+  padding: 8px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.connection-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.connection-indicator.connected {
+  color: var(--rf-tally-green);
+}
+
+.connection-indicator.disconnected {
+  color: var(--rf-tally-red);
+}
+
+.connection-indicator .status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+  animation: pulse 2s infinite;
+}
+
+.latency-info {
+  font-family: var(--rf-font-mono);
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.6);
+  margin-left: 8px;
+}
+
+/* 리소스 모니터 오버레이 */
+.resource-monitor-overlay {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  z-index: 200;
+  max-width: 300px;
+}
+
+/* 메인 비디오 영역 */
+.main-video-area {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.no-camera-selected {
+  text-align: center;
+  padding: 40px;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.no-camera-selected h2 {
+  font-size: 24px;
+  margin-bottom: 16px;
+  color: white;
+}
+
+.no-camera-selected p {
+  font-size: 16px;
+  margin-bottom: 24px;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+/* 하단 컨트롤 바 */
+.bottom-controls {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.9), transparent);
+  backdrop-filter: blur(10px);
+  padding: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 200;
+}
+
+.control-group {
+  display: flex;
+  gap: 12px;
+}
+
+.control-btn {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(5px);
+}
+
+.control-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.3);
+  transform: translateY(-1px);
+}
+
+.control-btn:active {
+  transform: translateY(0);
+}
+
+.tally-status {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-size: 12px;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.status-badge.program {
+  background: var(--rf-tally-red);
+  color: white;
+  box-shadow: 0 0 20px rgba(239, 68, 68, 0.5);
+  animation: pulse 2s infinite;
+}
+
+.status-badge.preview {
+  background: var(--rf-tally-green);
+  color: white;
+  box-shadow: 0 0 15px rgba(16, 185, 129, 0.5);
+}
+
+.status-badge.standby {
+  background: #6b7280;
+  color: white;
+  box-shadow: 0 0 10px rgba(107, 114, 128, 0.3);
+}
+
+/* 모달 오버레이 */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(5px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.modal-content {
+  background: var(--rf-bg-elevated);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 24px;
+  max-width: 500px;
+  width: 100%;
+  max-height: 80vh;
+  overflow-y: auto;
+  color: white;
+}
+
+.modal-content h2 {
+  font-size: 20px;
+  margin-bottom: 20px;
+  color: white;
+}
+
+/* 카메라 그리드 */
+.camera-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.camera-card {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 16px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  color: white;
+}
+
+.camera-card:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px);
+}
+
+.camera-card.selected {
+  background: var(--rf-primary-blue);
+  border-color: var(--rf-primary-blue);
+  box-shadow: 0 0 20px rgba(0, 198, 255, 0.3);
+}
+
+.camera-number {
+  font-size: 14px;
+  font-weight: bold;
+  margin-bottom: 8px;
+}
+
+.camera-name {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.8);
+  margin-bottom: 8px;
+}
+
+.camera-state {
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.camera-state.running {
+  background: var(--rf-tally-green);
+  color: white;
+}
+
+.camera-state.paused {
+  background: var(--rf-tally-yellow);
+  color: black;
+}
+
+.no-cameras {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 40px;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.no-cameras p {
+  font-size: 16px;
+  margin-bottom: 8px;
+}
+
+.no-cameras small {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+/* 설정 모달 */
+.settings-modal {
+  max-width: 600px;
+}
+
+.settings-section {
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.settings-section:last-child {
+  border-bottom: none;
+}
+
+.settings-section h3 {
+  font-size: 16px;
+  margin-bottom: 16px;
+  color: white;
+}
+
+.setting-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 0;
+  cursor: pointer;
+}
+
+.setting-item input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  margin-right: 12px;
+  cursor: pointer;
+}
+
+.setting-item input[type="range"] {
+  width: 120px;
+  margin-left: 12px;
+}
+
+.setting-item span {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.settings-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+/* 토스트 컨테이너 */
+.toast-container {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 1500;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 400px;
+}
+
+.toast {
+  background: rgba(0, 0, 0, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 16px;
+  backdrop-filter: blur(10px);
+  color: white;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.toast.low {
+  border-left: 4px solid var(--rf-primary-blue);
+}
+
+.toast.medium {
+  border-left: 4px solid var(--rf-tally-yellow);
+}
+
+.toast.high {
+  border-left: 4px solid var(--rf-tally-red);
+}
+
+.toast.critical {
+  border-left: 4px solid var(--rf-tally-red);
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.toast-content {
+  flex: 1;
+}
+
+.toast-message {
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+
+.toast-details {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.toast-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.toast-action {
+  background: var(--rf-primary-blue);
+  color: white;
+  border: none;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: opacity 0.3s ease;
+}
+
+.toast-action:hover {
+  opacity: 0.8;
+}
+
+.toast-dismiss {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 18px;
+  cursor: pointer;
+  line-height: 1;
+  transition: color 0.3s ease;
+}
+
+.toast-dismiss:hover {
+  color: white;
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+  .connection-status-overlay {
+    top: 10px;
+    left: 10px;
+    font-size: 11px;
+  }
+  
+  .resource-monitor-overlay {
+    top: 10px;
+    right: 10px;
+    max-width: 200px;
+  }
+  
+  .bottom-controls {
+    padding: 15px;
+  }
+  
+  .control-btn {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+  
+  .status-badge {
+    font-size: 10px;
+    padding: 4px 8px;
+  }
+  
+  .modal-content {
+    padding: 20px;
+    margin: 10px;
+  }
+  
+  .camera-grid {
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 8px;
+  }
+  
+  .camera-card {
+    padding: 12px;
+  }
+  
+  .toast-container {
+    top: 10px;
+    right: 10px;
+    max-width: 300px;
+  }
+  
+  .toast {
+    padding: 12px;
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 480px) {
+  .no-camera-selected {
+    padding: 20px;
+  }
+  
+  .no-camera-selected h2 {
+    font-size: 20px;
+  }
+  
+  .no-camera-selected p {
+    font-size: 14px;
+  }
+  
+  .camera-grid {
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  }
+  
+  .settings-modal {
+    max-width: 100%;
+  }
+  
+  .setting-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  
+  .setting-item input[type="range"] {
+    width: 100%;
+    margin-left: 0;
+  }
+}
+
+/* 세로 방향 최적화 */
+@media (orientation: portrait) {
+  .bottom-controls {
+    flex-direction: column;
+    gap: 16px;
+    align-items: center;
+  }
+  
+  .control-group {
+    order: 2;
+  }
+  
+  .tally-status {
+    order: 1;
+  }
+}
+
+/* 가로 방향 최적화 */
+@media (orientation: landscape) {
+  .resource-monitor-overlay {
+    max-width: 250px;
+  }
+  
+  .camera-grid {
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  }
+}
+
+/* 고대비 모드 */
+@media (prefers-contrast: high) {
+  .staff-view-advanced {
+    background: #000;
+  }
+  
+  .control-btn {
+    background: #ffffff;
+    color: #000000;
+    border: 2px solid #000000;
+  }
+  
+  .camera-card {
+    background: #ffffff;
+    color: #000000;
+    border: 2px solid #000000;
+  }
+  
+  .camera-card.selected {
+    background: #000000;
+    color: #ffffff;
+    border: 2px solid #ffffff;
+  }
+  
+  .modal-content {
+    background: #000000;
+    color: #ffffff;
+    border: 2px solid #ffffff;
+  }
+  
+  .toast {
+    background: #000000;
+    color: #ffffff;
+    border: 2px solid #ffffff;
+  }
+}
+
+/* 모션 축소 */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  
+  .status-badge.program {
+    animation: none;
+  }
+  
+  .connection-indicator .status-dot {
+    animation: none;
+  }
+}
+
+/* 인쇄 스타일 */
+@media print {
+  .staff-view-advanced {
+    background: white;
+    color: black;
+  }
+  
+  .connection-status-overlay,
+  .resource-monitor-overlay,
+  .bottom-controls,
+  .modal-overlay,
+  .toast-container {
+    display: none;
+  }
+  
+  .main-video-area {
+    border: 1px solid black;
+  }
+}

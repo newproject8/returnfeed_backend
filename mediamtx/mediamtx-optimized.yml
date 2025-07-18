@@ -1,0 +1,213 @@
+# MediaMTX Configuration File - Optimized for 0.1-10 Mbps H.264 Streaming
+# ReturnFeed Professional Broadcasting Platform
+
+# --- Global Settings ---
+logLevel: info
+logDestinations: [stdout]
+readTimeout: 20s
+writeTimeout: 20s
+writeQueueSize: 1024  # Optimized for 0.1-10 Mbps range
+udpMaxPayloadSize: 1472
+
+# --- API Settings ---
+api: true
+apiAddress: 0.0.0.0:9997
+
+# --- Authentication Settings ---
+authMethod: http
+authHTTPAddress: http://backend:3001/api/mediamtx/auth
+
+# --- SRT Server Settings ---
+srt: yes
+srtAddress: :8890
+
+# SRT optimized settings for 0.1-10 Mbps H.264 streams
+srtConnectionTimeout: 10s
+srtMaxBandwidth: 15000000   # 15 Mbps max (headroom for 10 Mbps streams)
+srtRecvBuf: 16777216        # 16 MB receive buffer
+srtSendBuf: 16777216        # 16 MB send buffer
+srtPayloadSize: 1316        # Standard SRT payload size
+srtLatency: 120             # 120ms latency (good for most networks)
+srtPeerIdleTimeout: 10s
+
+# --- WebRTC Server Settings ---
+webrtc: true
+webrtcAddress: :8889
+webrtcLocalUDPAddress: :8189
+webrtcIPsFromInterfaces: true
+webrtcAdditionalHosts: ["returnfeed.net"]
+webrtcAllowOrigin: "*"
+
+# ICE servers configuration
+webrtcICEServers2:
+  - url: "stun:stun.l.google.com:19302"
+  - url: "stun:stun1.l.google.com:19302"
+
+# --- HLS Settings (fallback) ---
+hls: true
+hlsAddress: :8888
+hlsAlwaysRemux: true
+hlsSegmentCount: 5
+hlsSegmentDuration: 2s
+hlsPartDuration: 500ms
+hlsSegmentMaxSize: 10M      # 10MB max for 10 Mbps streams
+hlsAllowOrigin: "*"
+
+# --- RTSP/RTMP (disabled) ---
+rtsp: false
+rtmp: false
+
+# --- Path Settings ---
+paths:
+  # Main SRT input path for PD software
+  pgm_srt_raw:
+    source: srt://localhost:8890
+    sourceProtocol: srt
+    sourceOnDemand: false
+    
+    # SRT specific settings
+    srtReadPassphrase: ""
+    srtPublishPassphrase: ""
+    
+    # Authentication hooks
+    readUser: any
+    readPass: any
+    publishUser: any
+    publishPass: any
+    
+    # Stream settings optimized for H.264
+    # No transcoding - pass through original H.264 stream
+    sourceAnyPortEnable: false
+    
+    # Reader limits
+    maxReaders: 50
+    
+    # Recording (optional)
+    record: false
+    recordPath: /recordings/%path/%Y-%m-%d_%H-%M-%S.mp4
+    recordFormat: fmp4
+    recordPartDuration: 5s
+    recordSegmentDuration: 1h
+    
+  # Test path for development
+  test:
+    source: srt://localhost:8890?streamid=test
+    sourceOnDemand: true
+    sourceOnDemandStartTimeout: 10s
+    sourceOnDemandCloseAfter: 10s
+    
+  # Dynamic PD user paths
+  # Path format: /pd/{pdUserId}/{streamKey}
+  "~^pd/([^/]+)/([^/]+)$":
+    source: srt://localhost:8890?streamid=$2
+    sourceProtocol: srt
+    sourceOnDemand: true
+    sourceOnDemandStartTimeout: 10s
+    sourceOnDemandCloseAfter: 30s
+    
+    # User-specific authentication
+    publishUser: $1
+    publishPass: $2
+    readUser: any
+    readPass: any
+    
+    # Settings for individual PD streams
+    maxReaders: 30
+    srtReadPassphrase: ""
+    srtPublishPassphrase: ""
+
+# --- Metrics and Monitoring ---
+metrics: true
+metricsAddress: :9998
+
+# --- Performance Optimization ---
+# Network buffer settings for 0.1-10 Mbps range
+runOnInit: |
+  # Optimize system buffers for streaming
+  echo 4194304 > /proc/sys/net/core/rmem_max  # 4MB
+  echo 4194304 > /proc/sys/net/core/wmem_max  # 4MB
+  echo "4096 87380 4194304" > /proc/sys/net/ipv4/tcp_rmem
+  echo "4096 65536 4194304" > /proc/sys/net/ipv4/tcp_wmem
+
+runOnInitRestart: false
+
+# --- Stream Event Hooks ---
+runOnReady: |
+  curl -X POST http://backend:3001/api/mediamtx/stream-ready \
+    -H "Content-Type: application/json" \
+    -d "{\"path\": \"$MTX_PATH\", \"source\": \"$MTX_SOURCE_TYPE\", \"video_codec\": \"$MTX_SOURCE_VIDEO_CODEC\", \"bitrate\": \"$MTX_SOURCE_VIDEO_BITRATE\"}"
+
+runOnNotReady: |
+  curl -X POST http://backend:3001/api/mediamtx/stream-ended \
+    -H "Content-Type: application/json" \
+    -d "{\"path\": \"$MTX_PATH\"}"
+
+runOnRead: |
+  echo "Client connected to stream $MTX_PATH from $MTX_READER_IP"
+  curl -X POST http://backend:3001/api/mediamtx/client-connected \
+    -H "Content-Type: application/json" \
+    -d "{\"path\": \"$MTX_PATH\", \"client_ip\": \"$MTX_READER_IP\", \"protocol\": \"$MTX_READER_PROTOCOL\"}"
+
+runOnUnread: |
+  echo "Client disconnected from stream $MTX_PATH"
+  curl -X POST http://backend:3001/api/mediamtx/client-disconnected \
+    -H "Content-Type: application/json" \
+    -d "{\"path\": \"$MTX_PATH\", \"client_ip\": \"$MTX_READER_IP\"}"
+
+runOnPublish: |
+  echo "Publishing started on $MTX_PATH from $MTX_PUBLISHER_IP"
+  # Validate H.264 codec and initialize bitrate management
+  if [[ "$MTX_SOURCE_VIDEO_CODEC" != "H264" ]]; then
+    echo "Warning: Non-H264 codec detected: $MTX_SOURCE_VIDEO_CODEC"
+  fi
+  
+  # Initialize bitrate settings for this stream
+  curl -X POST http://backend:3001/api/bitrate/initialize-stream \
+    -H "Content-Type: application/json" \
+    -d "{\"path\": \"$MTX_PATH\", \"max_bitrate\": \"$MTX_SOURCE_VIDEO_BITRATE\", \"codec\": \"$MTX_SOURCE_VIDEO_CODEC\"}"
+
+runOnUnpublish: |
+  echo "Publishing stopped on $MTX_PATH"
+  curl -X POST http://backend:3001/api/bitrate/cleanup-stream \
+    -H "Content-Type: application/json" \
+    -d "{\"path\": \"$MTX_PATH\"}"
+
+# --- Default Path Settings ---
+pathDefaults:
+  # Defaults for all paths
+  source: ""
+  sourceProtocol: automatic
+  sourceAnyPortEnable: false
+  sourceFingerprint: ""
+  sourceOnDemand: false
+  sourceOnDemandStartTimeout: 10s
+  sourceOnDemandCloseAfter: 10s
+  sourceRedirect: ""
+  disablePublisherOverride: false
+  fallback: ""
+  
+  # SRT defaults
+  srtReadPassphrase: ""
+  srtPublishPassphrase: ""
+  
+  # Reader settings
+  readTimeout: 20s
+  writeTimeout: 20s
+  writeQueueSize: 512
+  maxReaders: 50
+  
+  # Default authentication
+  readUser: ""
+  readPass: ""
+  readIPs: []
+  publishUser: ""
+  publishPass: ""
+  publishIPs: []
+  
+  # Recording defaults
+  record: false
+  recordPath: ""
+  recordFormat: fmp4
+  recordPartDuration: 5s
+  recordSegmentDuration: 1h
+  recordDeleteAfter: 24h

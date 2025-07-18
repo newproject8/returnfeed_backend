@@ -1,0 +1,46 @@
+# MediaMTX 설정 - 간소화된 시뮬캐스트 (v4.2 Fixed)
+# 목표: 2개 품질 스트림 (1Mbps, 0.1Mbps)으로 네트워크 적응성 제공
+
+# 로그 레벨
+logLevel: info
+logDestinations: [stdout]
+
+# API 서버
+api: yes
+apiAddress: :9997
+
+# 메트릭 서버
+metrics: yes
+metricsAddress: :9998
+
+# WebRTC 설정
+webrtc: yes
+webrtcAddress: :8889
+webrtcICEServers:
+  - stun:stun.l.google.com:19302
+
+# SRT 설정
+srt: yes
+srtAddress: :8890
+
+# 전역 설정
+rtspDisable: yes
+rtmpDisable: yes
+hlsDisable: yes
+
+# 경로 설정
+paths:
+  # 모든 경로에 대한 기본 설정
+  all:
+    # 소스 설정
+    source: publisher
+    sourceOnDemand: no
+    sourceOnDemandStartTimeout: 2s
+    sourceOnDemandCloseAfter: 10s
+    
+    # SRT 설정 (전역)
+    srtReadPassphrase: ${SRT_PASSPHRASE}
+
+# 환경 변수
+env:
+  SRT_PASSPHRASE: ${SRT_PASSPHRASE}

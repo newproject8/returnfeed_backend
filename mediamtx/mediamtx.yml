@@ -1,0 +1,44 @@
+# MediaMTX Configuration File (v1.12.2 optimized for low-latency SRT to WebRTC - No Audio Transcoding)
+
+# --- Global Settings ---
+logLevel: debug # 문제 해결 시 debug, 안정화 후 info로 변경 권장
+logDestinations: [stdout] # Docker 환경에서는 stdout이 편리
+readTimeout: 10s
+writeTimeout: 10s
+writeQueueSize: 512 # 트랜스코딩이 없으므로 기본값으로 설정
+udpMaxPayloadSize: 1472 # 기본값. 대부분 LAN 환경에 적합
+
+# --- SRT Server Settings ---
+# MediaMTX v1.x 버전에서는 srt 키에 boolean 값을, srtAddress 키에 주소를 직접 명시하는 것이 일반적입니다.
+srt: true # SRT 기능 활성화
+srtAddress: :8890 # SRT 리스닝 주소 및 포트
+
+# --- WebRTC Server Settings ---
+# MediaMTX v1.x 버전에서는 webrtc 키에 boolean 값을, 관련 주소들을 직접 명시하는 것이 일반적입니다.
+webrtc: true # WebRTC 기능 활성화
+webrtcAddress: :8889 # WebRTC HTTP 시그널링 주소 및 포트
+webrtcLocalUDPAddress: :8189 # WebRTC ICE를 위한 로컬 UDP 리스닝 주소 및 포트
+webrtcAdditionalHosts: ["returnfeed.net", "192.168.0.242"] # 외부 도메인과 내부 IP 모두 추가
+webrtcAllowOrigin: "*" # 모든 출처에서의 WebRTC 접속 허용
+
+# ICE 서버 설정
+# 이전 로그에서 파싱 오류 없이 통과했던 webrtcICEServers2 와 그 하위 url (단수형)을 사용합니다.
+webrtcICEServers2:
+  - url: "stun:stun.l.google.com:19302" # STUN 서버
+  # TURN 서버 설정은 여전히 권장됩니다 (특히 다양한 네트워크 환경 고려 시)
+  # - url: "turn:your_turn_server_ip_or_domain:3478?transport=udp"
+  #   username: "your_turn_username"
+  #   password: "your_turn_password"
+
+# --- Path Settings ---
+paths:
+  pgm_srt_raw: # vMix가 SRT(H.264/AAC)를 발행하고, WebRTC 클라이언트도 이 경로로 접속
+    source: srt://:8890
+    # 이 경로의 스트림은 WebRTC로 자동 변환(리먹싱)되어 제공됩니다.
+    # (단, 오디오 코덱이 AAC인 경우 WebRTC에서 소리가 안 나올 수 있음)
+
+# API 서버 설정 (필요시 활성화)
+# api: true
+# apiAddress: 127.0.0.1:9997
+
+# 기타 필요한 전역 설정이나 경로 설정을 여기에 추가할 수 있습니다.

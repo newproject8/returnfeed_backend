@@ -1,0 +1,183 @@
+# MediaMTX 설정 - 순수 패스스루 모드 (v4.1)
+# 목표: 트랜스코딩 없이 프로토콜 변환만 수행 (SRT → WebRTC)
+# 레이턴시 목표: 20-50ms
+
+# 로그 레벨
+logLevel: info
+logDestinations: [stdout]
+
+# 패스스루 모드 활성화
+runOnInit: |
+  echo "[PASSTHROUGH MODE] MediaMTX 시작 - 트랜스코딩 비활성화"
+  echo "[PASSTHROUGH MODE] SRT → WebRTC 프로토콜 변환만 수행"
+
+# API 서버
+api: yes
+apiAddress: :9997
+
+# 메트릭 서버
+metrics: yes
+metricsAddress: :9998
+
+# WebRTC 설정 - 패스스루 최적화
+webrtc: yes
+webrtcAddress: :8889
+webrtcICEServers:
+  - stun:stun.l.google.com:19302
+
+# SRT 설정 - 패스스루 입력
+srt: yes
+srtAddress: :8890
+
+# 전역 패스스루 설정
+avDisableFileCaching: yes      # 파일 캐싱 비활성화
+rtspDisable: yes              # RTSP 비활성화 (불필요)
+rtmpDisable: yes              # RTMP 비활성화 (불필요)
+hlsDisable: yes               # HLS 비활성화 (WebRTC만 사용)
+
+# 경로 설정
+paths:
+  # NDI Proxy 640x360 패스스루 경로
+  ~^ndi_proxy_.*:
+    source: publisher
+    sourceProtocol: srt
+    
+    # SRT 최적화
+    srtReadPassphrase: $SRT_PASSPHRASE
+    srtLatency: 20               # 20ms - 최소 레이턴시
+    srtMaxbw: 1500000           # 1.5Mbps 최대
+    srtConnectTimeout: 5s
+    srtPeerIdleTimeout: 60s
+    
+    # WebRTC 패스스루 출력
+    # 입력 스트림을 그대로 전달 (재인코딩 없음)
+    webrtc: yes
+    webrtcICEServers:
+      - stun:stun.l.google.com:19302
+    
+    # 패스스루 모드 강제
+    webrtcCodecH264: yes          # H.264 코덱 활성화
+    webrtcCodecOpus: yes          # Opus 코덱 활성화
+    webrtcCodecVP8: no            # VP8 비활성화
+    webrtcCodecVP9: no            # VP9 비활성화
+    
+    # 녹화 비활성화 (레이턴시 우선)
+    record: no
+    
+    # 접근 제어
+    publishUser: $PUBLISH_USER
+    publishPass: $PUBLISH_PASS
+    publishIPs: []  # 모든 IP 허용
+    
+    readUser:
+    readPass:
+    readIPs: []     # 모든 IP 허용
+    
+    # 스트림 시작 시 패스스루 검증
+    runOnReady: |
+      echo "[PASSTHROUGH] 스트림 시작: $MTX_PATH"
+      echo "[PASSTHROUGH] 입력 코덱 확인 중..."
+      
+      # 패스스루 모드 확인
+      curl -s http://localhost:9997/v3/paths/get/$MTX_PATH | \
+        jq '.tracks[] | {codec: .codec, decoderDecoded: .decoderDecoded, encoderEncoded: .encoderEncoded}' | \
+        grep -E "(decoderDecoded|encoderEncoded)" | \
+        grep -q "null" && echo "[PASSTHROUGH] ✓ 패스스루 모드 확인됨" || echo "[PASSTHROUGH] ⚠ 트랜스코딩 감지됨!"
+      
+      # 코덱 정보 출력
+      curl -s http://localhost:9997/v3/paths/get/$MTX_PATH | \
+        jq '.tracks[] | select(.type == "video") | {codec: .codec, width: .width, height: .height, fps: .fps}'
+    
+    # 스트림 종료 시
+    runOnNotReady: |
+      echo "[PASSTHROUGH] 스트림 종료: $MTX_PATH"
+    
+    # 클라이언트 연결 시
+    runOnConnect: |
+      echo "[PASSTHROUGH] 클라이언트 연결: $MTX_CONN_ID from $MTX_CONN_IP"
+      echo "[PASSTHROUGH] 프로토콜: $MTX_CONN_PROTOCOL"
+    
+    # 클라이언트 연결 해제 시
+    runOnDisconnect: |
+      echo "[PASSTHROUGH] 클라이언트 연결 해제: $MTX_CONN_ID"
+
+  # PD 스트림 경로 (일반)
+  ~^pd_.*:
+    source: publisher
+    sourceProtocol: srt
+    
+    # SRT 설정
+    srtReadPassphrase: $SRT_PASSPHRASE
+    srtLatency: 20
+    srtMaxbw: 5000000           # 5Mbps (640x360 고품질)
+    
+    # WebRTC 패스스루
+    webrtc: yes
+    webrtcCodecH264: yes
+    webrtcCodecOpus: yes
+    webrtcCodecVP8: no
+    webrtcCodecVP9: no
+    
+    # 상태 모니터링
+    runOnReady: |
+      echo "[PASSTHROUGH] PD 스트림 시작: $MTX_PATH"
+      
+      # 스트림 정보 기록
+      STREAM_INFO=$(curl -s http://localhost:9997/v3/paths/get/$MTX_PATH)
+      echo "$STREAM_INFO" > /tmp/${MTX_PATH}_info.json
+      
+      # 패스스루 검증
+      echo "$STREAM_INFO" | jq '.tracks[] | select(.type == "video") | {
+        codec: .codec,
+        resolution: "\(.width)x\(.height)",
+        fps: .fps,
+        passthrough: ((.decoderDecoded == null) and (.encoderEncoded == null))
+      }'
+
+# 성능 최적화 설정
+pathDefaults:
+  # 소스 설정
+  sourceOnDemand: yes
+  sourceOnDemandStartTimeout: 5s
+  sourceOnDemandCloseAfter: 10s
+  
+  # 리더 설정
+  readMaxSessionsPerPath: 100  # PD당 최대 100명
+  
+  # 버퍼 설정 (최소화)
+  readBufferSize: 256KB        # 작은 버퍼로 레이턴시 감소
+  
+  # 타임아웃 설정
+  readTimeout: 10s
+  writeTimeout: 10s
+  writeQueueSize: 128          # 쓰기 큐 최소화
+  
+  # 패스스루 모드 전역 설정
+  runOnInit: |
+    echo "[PASSTHROUGH] 경로 초기화: $MTX_PATH"
+
+# 리소스 제한
+maxSessions: 300               # 최대 300개 세션
+authMethods: [basic, digest]
+
+# 환경 변수
+env:
+  SRT_PASSPHRASE: ${SRT_PASSPHRASE}
+  PUBLISH_USER: ${PUBLISH_USER}
+  PUBLISH_PASS: ${PUBLISH_PASS}
+
+# 패스스루 모드 검증 스크립트
+runOnReload: |
+  echo "[PASSTHROUGH] 설정 재로드됨"
+  echo "[PASSTHROUGH] 활성 스트림 검증 중..."
+  
+  # 모든 활성 경로 검사
+  curl -s http://localhost:9997/v3/paths/list | jq -r '.items[].name' | while read path; do
+    echo -n "[PASSTHROUGH] $path: "
+    curl -s http://localhost:9997/v3/paths/get/$path | \
+      jq -r '.tracks[] | select(.type == "video") | 
+        if (.decoderDecoded == null and .encoderEncoded == null) 
+        then "✓ 패스스루" 
+        else "✗ 트랜스코딩 (" + .codec + ")" 
+        end'
+  done

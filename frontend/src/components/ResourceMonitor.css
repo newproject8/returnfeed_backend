@@ -1,0 +1,501 @@
+/* 리소스 모니터 스타일 */
+.resource-monitor {
+  background: rgba(0, 0, 0, 0.9);
+  border-radius: 12px;
+  padding: 16px;
+  margin: 8px;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  font-family: 'Monaco', 'Menlo', monospace;
+  transition: all 0.3s ease;
+  min-width: 300px;
+}
+
+.resource-monitor:hover {
+  border-color: rgba(255, 255, 255, 0.2);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.resource-monitor.compact {
+  padding: 12px;
+  min-width: 250px;
+}
+
+/* 헤더 */
+.monitor-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.monitor-title {
+  font-size: 14px;
+  font-weight: bold;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.status-indicators {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+}
+
+.status-dot.streaming {
+  background: #ff4444;
+  box-shadow: 0 0 10px rgba(255, 68, 68, 0.5);
+  animation: pulse 2s infinite;
+}
+
+.status-dot.idle {
+  background: #666;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.status-text {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.expand-button {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 12px;
+  cursor: pointer;
+  padding: 4px;
+  transition: color 0.3s ease;
+}
+
+.expand-button:hover {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+/* 메인 콘텐츠 */
+.monitor-content {
+  overflow: hidden;
+}
+
+/* 메인 리소스 차트 */
+.main-resources {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  margin-bottom: 20px;
+  gap: 16px;
+}
+
+.resource-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+/* 원형 프로그레스 바 */
+.circular-progress {
+  position: relative;
+  display: inline-block;
+}
+
+.circular-progress-svg {
+  transform: rotate(-90deg);
+}
+
+.circular-progress-content {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+}
+
+.progress-value {
+  font-size: 12px;
+  font-weight: bold;
+  color: white;
+  line-height: 1;
+}
+
+.progress-label {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.7);
+  margin-top: 2px;
+}
+
+/* 리소스 상세 정보 */
+.resource-details {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 80px;
+}
+
+.detail-item {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+}
+
+.detail-item .label {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.detail-item .value {
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: bold;
+}
+
+/* 스트리밍 상태 */
+.streaming-status {
+  background: rgba(255, 68, 68, 0.1);
+  border: 1px solid rgba(255, 68, 68, 0.3);
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 16px;
+}
+
+.streaming-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.streaming-title {
+  font-size: 12px;
+  font-weight: bold;
+  color: #ff4444;
+}
+
+.streaming-encoder {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.1);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.streaming-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+  gap: 8px;
+}
+
+.metric {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.metric-label {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.metric-value {
+  font-size: 12px;
+  color: white;
+  font-weight: bold;
+}
+
+/* 네트워크 상태 */
+.network-status {
+  background: rgba(0, 255, 0, 0.05);
+  border: 1px solid rgba(0, 255, 0, 0.2);
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 16px;
+}
+
+.network-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.network-title {
+  font-size: 12px;
+  font-weight: bold;
+  color: #00ff00;
+}
+
+.network-latency {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: bold;
+}
+
+.network-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 8px;
+}
+
+.network-metric {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.network-metric .metric-label {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.network-metric .metric-value {
+  font-size: 11px;
+  color: white;
+  font-weight: bold;
+}
+
+/* 히스토리 차트 */
+.history-charts {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.chart-group {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 6px;
+  padding: 8px;
+}
+
+.chart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.chart-title {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.chart-current {
+  font-size: 11px;
+  color: white;
+  font-weight: bold;
+}
+
+/* 미니 차트 */
+.mini-chart {
+  width: 100%;
+  height: 40px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 4px;
+}
+
+.mini-chart polyline {
+  filter: drop-shadow(0 0 2px currentColor);
+}
+
+/* 컴팩트 모드 스타일 */
+.resource-monitor.compact .main-resources {
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.resource-monitor.compact .circular-progress {
+  transform: scale(0.8);
+}
+
+.resource-monitor.compact .streaming-status,
+.resource-monitor.compact .network-status {
+  padding: 8px;
+  margin-bottom: 12px;
+}
+
+.resource-monitor.compact .streaming-metrics,
+.resource-monitor.compact .network-metrics {
+  grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
+  gap: 6px;
+}
+
+.resource-monitor.compact .history-charts {
+  gap: 8px;
+}
+
+.resource-monitor.compact .chart-group {
+  padding: 6px;
+}
+
+.resource-monitor.compact .mini-chart {
+  height: 30px;
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+  .resource-monitor {
+    margin: 4px;
+    padding: 12px;
+    min-width: 200px;
+  }
+  
+  .main-resources {
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .resource-group {
+    flex-direction: row;
+    gap: 12px;
+  }
+  
+  .circular-progress {
+    transform: scale(0.7);
+  }
+  
+  .streaming-metrics,
+  .network-metrics {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .history-charts {
+    gap: 8px;
+  }
+  
+  .mini-chart {
+    height: 30px;
+  }
+}
+
+@media (max-width: 480px) {
+  .resource-monitor {
+    margin: 2px;
+    padding: 8px;
+    min-width: 180px;
+  }
+  
+  .monitor-title {
+    font-size: 12px;
+  }
+  
+  .resource-group {
+    flex-direction: column;
+    gap: 6px;
+  }
+  
+  .circular-progress {
+    transform: scale(0.6);
+  }
+  
+  .streaming-metrics,
+  .network-metrics {
+    grid-template-columns: 1fr;
+  }
+  
+  .mini-chart {
+    height: 25px;
+  }
+}
+
+/* 다크 모드 대응 */
+@media (prefers-color-scheme: dark) {
+  .resource-monitor {
+    background: rgba(0, 0, 0, 0.95);
+    border-color: rgba(255, 255, 255, 0.15);
+  }
+  
+  .chart-group {
+    background: rgba(255, 255, 255, 0.08);
+  }
+  
+  .mini-chart {
+    background: rgba(0, 0, 0, 0.5);
+  }
+}
+
+/* 고대비 모드 지원 */
+@media (prefers-contrast: high) {
+  .resource-monitor {
+    background: rgba(0, 0, 0, 0.98);
+    border-color: rgba(255, 255, 255, 0.3);
+  }
+  
+  .monitor-title {
+    color: white;
+  }
+  
+  .status-text {
+    color: rgba(255, 255, 255, 0.9);
+  }
+  
+  .streaming-status {
+    background: rgba(255, 68, 68, 0.2);
+    border-color: rgba(255, 68, 68, 0.5);
+  }
+  
+  .network-status {
+    background: rgba(0, 255, 0, 0.1);
+    border-color: rgba(0, 255, 0, 0.4);
+  }
+}
+
+/* 애니메이션 줄이기 */
+@media (prefers-reduced-motion: reduce) {
+  .resource-monitor,
+  .circular-progress-svg circle,
+  .status-dot,
+  .expand-button {
+    animation: none;
+    transition: none;
+  }
+  
+  .status-dot.streaming {
+    animation: none;
+  }
+}
+
+/* 인쇄 스타일 */
+@media print {
+  .resource-monitor {
+    background: white;
+    color: black;
+    border: 1px solid black;
+  }
+  
+  .monitor-title,
+  .streaming-title,
+  .network-title {
+    color: black;
+  }
+  
+  .status-text,
+  .metric-label,
+  .chart-title {
+    color: #666;
+  }
+  
+  .streaming-status,
+  .network-status {
+    background: none;
+    border: 1px solid #ccc;
+  }
+  
+  .mini-chart {
+    background: #f0f0f0;
+  }
+}

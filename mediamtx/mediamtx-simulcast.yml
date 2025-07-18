@@ -1,0 +1,152 @@
+# MediaMTX 설정 - 시뮬캐스트 지원 (v4.2)
+# 목표: 3개 품질의 스트림을 동시에 처리하여 네트워크 적응성 제공
+
+# 로그 레벨
+logLevel: info
+logDestinations: [stdout]
+
+# API 서버
+api: yes
+apiAddress: :9997
+
+# 메트릭 서버
+metrics: yes
+metricsAddress: :9998
+
+# WebRTC 설정 - 시뮬캐스트 지원
+webrtc: yes
+webrtcAddress: :8889
+webrtcICEServers:
+  - stun:stun.l.google.com:19302
+
+# SRT 설정 - 시뮬캐스트 입력
+srt: yes
+srtAddress: :8890
+
+# 전역 설정
+rtspDisable: yes
+rtmpDisable: yes
+hlsDisable: yes
+
+# 경로 설정
+paths:
+  # 시뮬캐스트 스트림 (3개 레이어)
+  ~^simulcast_.*_h$:
+    # High Quality: 640x360 @ 1Mbps
+    source: publisher
+    sourceProtocol: srt
+    srtReadPassphrase: $SRT_PASSPHRASE
+    srtLatency: 20
+    srtMaxbw: 1500000
+    
+    webrtc: yes
+    webrtcICEServers:
+      - stun:stun.l.google.com:19302
+    
+    # 시뮬캐스트 메타데이터
+    runOnReady: |
+      echo "[SIMULCAST] High layer 시작: $MTX_PATH"
+      echo "[SIMULCAST] 640x360 @ 1Mbps"
+
+  ~^simulcast_.*_m$:
+    # Medium Quality: 320x180 @ 500kbps
+    source: publisher
+    sourceProtocol: srt
+    srtReadPassphrase: $SRT_PASSPHRASE
+    srtLatency: 20
+    srtMaxbw: 750000
+    
+    webrtc: yes
+    webrtcICEServers:
+      - stun:stun.l.google.com:19302
+    
+    runOnReady: |
+      echo "[SIMULCAST] Medium layer 시작: $MTX_PATH"
+      echo "[SIMULCAST] 320x180 @ 500kbps"
+
+  ~^simulcast_.*_l$:
+    # Low Quality: 160x90 @ 200kbps
+    source: publisher
+    sourceProtocol: srt
+    srtReadPassphrase: $SRT_PASSPHRASE
+    srtLatency: 20
+    srtMaxbw: 300000
+    
+    webrtc: yes
+    webrtcICEServers:
+      - stun:stun.l.google.com:19302
+    
+    runOnReady: |
+      echo "[SIMULCAST] Low layer 시작: $MTX_PATH"
+      echo "[SIMULCAST] 160x90 @ 200kbps"
+
+  # 시뮬캐스트 번들 경로 (클라이언트 접속점)
+  ~^simulcast_.*$:
+    # 번들 경로는 실제 스트림이 아닌 메타데이터만 제공
+    source: redirect
+    sourceRedirect: simulcast_$G1_h  # 기본으로 High 품질 리다이렉트
+    
+    webrtc: yes
+    webrtcICEServers:
+      - stun:stun.l.google.com:19302
+    
+    # 시뮬캐스트 협상 지원
+    runOnConnect: |
+      echo "[SIMULCAST] 클라이언트 연결: $MTX_CONN_ID"
+      echo "[SIMULCAST] 사용 가능한 레이어: h, m, l"
+      
+      # 시뮬캐스트 메타데이터 제공
+      SESSION_KEY=$(echo $MTX_PATH | sed 's/simulcast_//')
+      if [ -f "/tmp/simulcast_${SESSION_KEY}.json" ]; then
+        cat "/tmp/simulcast_${SESSION_KEY}.json"
+      fi
+    
+    # 동적 품질 전환 지원
+    runOnRead: |
+      echo "[SIMULCAST] 읽기 시작: $MTX_READER_ID"
+      # 클라이언트가 요청한 품질 레이어 확인
+      # WebRTC 시뮬캐스트 협상을 통해 자동 처리됨
+
+# 시뮬캐스트 전용 설정
+pathDefaults:
+  # 소스 설정
+  sourceOnDemand: no  # 항상 활성 (빠른 전환)
+  sourceOnDemandStartTimeout: 2s
+  sourceOnDemandCloseAfter: 10s
+  
+  # 리더 설정
+  readMaxSessionsPerPath: 100
+  
+  # 버퍼 설정 (품질 전환 시 빠른 반응)
+  readBufferSize: 256KB
+  
+  # 타임아웃 설정
+  readTimeout: 10s
+  writeTimeout: 10s
+  writeQueueSize: 128
+
+# 시뮬캐스트 그룹 관리
+# 동일 세션의 모든 레이어를 그룹으로 관리
+runOnInit: |
+  echo "[SIMULCAST] MediaMTX 시뮬캐스트 모드 시작"
+  echo "[SIMULCAST] 지원 레이어: High(640x360), Medium(320x180), Low(160x90)"
+  
+  # 시뮬캐스트 그룹 디렉토리 생성
+  mkdir -p /tmp/simulcast_groups
+
+# 환경 변수
+env:
+  SRT_PASSPHRASE: ${SRT_PASSPHRASE}
+
+# 시뮬캐스트 모니터링
+runOnReload: |
+  echo "[SIMULCAST] 활성 시뮬캐스트 세션 확인"
+  
+  # 모든 시뮬캐스트 경로 확인
+  curl -s http://localhost:9997/v3/paths/list | jq -r '.items[].name' | grep "^simulcast_" | while read path; do
+    if [[ $path =~ simulcast_(.*)_(h|m|l)$ ]]; then
+      SESSION="${BASH_REMATCH[1]}"
+      LAYER="${BASH_REMATCH[2]}"
+      echo "[SIMULCAST] 세션: $SESSION, 레이어: $LAYER"
+    fi
+  done

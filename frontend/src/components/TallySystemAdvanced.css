@@ -1,0 +1,425 @@
+/* 탤리 시스템 고급 스타일 */
+.tally-advanced-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.tally-advanced-main {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #000;
+  border: 3px solid transparent;
+  transition: all 0.3s ease;
+}
+
+/* 플래시 오버레이 */
+.tally-flash-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.8);
+  z-index: 1000;
+  pointer-events: none;
+}
+
+/* 테두리 애니메이션 */
+.tally-border-animation {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: 8px;
+  pointer-events: none;
+  z-index: 10;
+}
+
+/* 코너 마커 */
+.tally-corner-markers {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 20;
+  pointer-events: none;
+}
+
+.corner-marker {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  border: 2px solid transparent;
+  transition: all 0.3s ease;
+}
+
+.corner-marker.top-left {
+  top: 10px;
+  left: 10px;
+  border-top-color: currentColor;
+  border-left-color: currentColor;
+}
+
+.corner-marker.top-right {
+  top: 10px;
+  right: 10px;
+  border-top-color: currentColor;
+  border-right-color: currentColor;
+}
+
+.corner-marker.bottom-left {
+  bottom: 10px;
+  left: 10px;
+  border-bottom-color: currentColor;
+  border-left-color: currentColor;
+}
+
+.corner-marker.bottom-right {
+  bottom: 10px;
+  right: 10px;
+  border-bottom-color: currentColor;
+  border-right-color: currentColor;
+}
+
+/* 상태 표시 오버레이 */
+.tally-status-overlay {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  right: 20px;
+  z-index: 30;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  pointer-events: none;
+}
+
+.tally-status-text {
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-weight: bold;
+  font-size: 14px;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.tally-camera-number {
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-size: 12px;
+  font-weight: bold;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* 파형 애니메이션 */
+.tally-waveform {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 60px;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  gap: 2px;
+  z-index: 25;
+  pointer-events: none;
+}
+
+.wave-bar {
+  width: 3px;
+  background: #ff0000;
+  border-radius: 2px;
+  opacity: 0.7;
+}
+
+/* 콘텐츠 영역 */
+.tally-content {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  z-index: 5;
+}
+
+/* 상태 전환 표시기 */
+.tally-transition-indicator {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(0, 0, 0, 0.9);
+  color: white;
+  padding: 20px;
+  border-radius: 50%;
+  font-size: 24px;
+  z-index: 50;
+  pointer-events: none;
+}
+
+/* 하단 상태 바 */
+.tally-status-bar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 50px;
+  background: rgba(0, 0, 0, 0.9);
+  backdrop-filter: blur(10px);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 20px;
+  z-index: 40;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.status-indicators {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+}
+
+.indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px;
+  border-radius: 12px;
+  transition: all 0.3s ease;
+  font-size: 12px;
+  font-weight: bold;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.indicator.active {
+  color: white;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.indicator-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+}
+
+.indicator-dot.program {
+  background: #666;
+}
+
+.indicator-dot.preview {
+  background: #666;
+}
+
+.indicator-dot.standby {
+  background: #666;
+}
+
+.indicator.active .indicator-dot.program {
+  background: #ff0000;
+  box-shadow: 0 0 10px #ff0000;
+}
+
+.indicator.active .indicator-dot.preview {
+  background: #00ff00;
+  box-shadow: 0 0 10px #00ff00;
+}
+
+.indicator.active .indicator-dot.standby {
+  background: #888;
+  box-shadow: 0 0 10px #888;
+}
+
+.camera-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.camera-label {
+  font-weight: bold;
+}
+
+.signal-strength {
+  display: flex;
+  gap: 2px;
+  align-items: flex-end;
+}
+
+.signal-bar {
+  width: 3px;
+  background: #666;
+  border-radius: 1px;
+  transition: all 0.3s ease;
+}
+
+.signal-bar:nth-child(1) { height: 6px; }
+.signal-bar:nth-child(2) { height: 10px; }
+.signal-bar:nth-child(3) { height: 14px; }
+.signal-bar:nth-child(4) { height: 18px; }
+
+/* 상태별 스타일 */
+.tally-advanced-program {
+  color: #ff0000;
+}
+
+.tally-advanced-program .tally-advanced-main {
+  border-color: #ff0000;
+  box-shadow: 0 0 20px rgba(255, 0, 0, 0.5);
+}
+
+.tally-advanced-program .corner-marker {
+  color: #ff0000;
+}
+
+.tally-advanced-program .signal-bar {
+  background: #ff0000;
+}
+
+.tally-advanced-program .tally-status-text {
+  background: rgba(255, 0, 0, 0.9);
+  color: white;
+}
+
+.tally-advanced-preview {
+  color: #00ff00;
+}
+
+.tally-advanced-preview .tally-advanced-main {
+  border-color: #00ff00;
+  box-shadow: 0 0 15px rgba(0, 255, 0, 0.3);
+}
+
+.tally-advanced-preview .corner-marker {
+  color: #00ff00;
+}
+
+.tally-advanced-preview .signal-bar {
+  background: #00ff00;
+}
+
+.tally-advanced-preview .tally-status-text {
+  background: rgba(0, 255, 0, 0.9);
+  color: black;
+}
+
+.tally-advanced-standby {
+  color: #888;
+}
+
+.tally-advanced-standby .tally-advanced-main {
+  border-color: #333;
+}
+
+.tally-advanced-standby .corner-marker {
+  color: #888;
+}
+
+.tally-advanced-standby .signal-bar {
+  background: #666;
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+  .tally-status-overlay {
+    top: 10px;
+    left: 10px;
+    right: 10px;
+  }
+  
+  .tally-status-text {
+    font-size: 12px;
+    padding: 6px 12px;
+  }
+  
+  .tally-camera-number {
+    font-size: 10px;
+    padding: 4px 8px;
+  }
+  
+  .tally-status-bar {
+    height: 40px;
+    padding: 0 10px;
+  }
+  
+  .status-indicators {
+    gap: 10px;
+  }
+  
+  .indicator {
+    font-size: 10px;
+    padding: 2px 6px;
+  }
+  
+  .camera-info {
+    font-size: 10px;
+    gap: 8px;
+  }
+  
+  .corner-marker {
+    width: 15px;
+    height: 15px;
+  }
+  
+  .corner-marker.top-left,
+  .corner-marker.top-right {
+    top: 5px;
+  }
+  
+  .corner-marker.bottom-left,
+  .corner-marker.bottom-right {
+    bottom: 5px;
+  }
+  
+  .corner-marker.top-left,
+  .corner-marker.bottom-left {
+    left: 5px;
+  }
+  
+  .corner-marker.top-right,
+  .corner-marker.bottom-right {
+    right: 5px;
+  }
+}
+
+/* 다크 모드 지원 */
+@media (prefers-color-scheme: dark) {
+  .tally-advanced-main {
+    background: #111;
+  }
+  
+  .tally-status-bar {
+    background: rgba(17, 17, 17, 0.9);
+  }
+}
+
+/* 고대비 모드 지원 */
+@media (prefers-contrast: high) {
+  .tally-advanced-program .tally-advanced-main {
+    border-width: 4px;
+  }
+  
+  .tally-advanced-preview .tally-advanced-main {
+    border-width: 4px;
+  }
+  
+  .corner-marker {
+    border-width: 3px;
+  }
+}

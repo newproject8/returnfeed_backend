@@ -1,0 +1,30 @@
+# MediaMTX Test Configuration for Simulcast
+
+logLevel: info
+
+# API without authentication
+apiAllowOrigin: '*'
+
+api: yes
+apiAddress: :9997
+
+metrics: yes
+metricsAddress: :9998
+
+# WebRTC
+webrtc: yes
+webrtcAddress: :8889
+
+# SRT
+srt: yes
+srtAddress: :8890
+
+# Disable unused protocols
+rtsp: no
+rtmp: no
+hls: no
+
+# Simple path configuration
+paths:
+  all:
+    source: publisher

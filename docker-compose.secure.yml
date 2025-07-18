@@ -1,0 +1,91 @@
+version: '3.8'
+
+networks:
+  returnfeed-net:
+    driver: bridge
+
+volumes:
+  postgres-data:
+    driver: local
+
+services:
+  nginx:
+    image: nginx:latest
+    container_name: returnfeed-nginx
+    ports:
+      - "80:80"    # HTTP
+      - "443:443"   # HTTPS
+      - "8092:80"   # 외부 리버스 프록시용
+    volumes:
+      - ./nginx/nginx-fixed.conf:/etc/nginx/nginx.conf:ro
+      - ./frontend/dist:/usr/share/nginx/html
+      - ./nginx/certs:/etc/nginx/certs:ro
+    networks:
+      - returnfeed-net
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+  # Backend API Server - 사용자 인증 및 관리
+  backend:
+    build:
+      context: ./backend
+    container_name: returnfeed-backend
+    ports:
+      - "3002:3001" # 백엔드 직접 접근용 (프로덕션에서는 제거 권장)
+    volumes:
+      - ./backend:/usr/src/app
+    networks:
+      - returnfeed-net
+    depends_on:
+      - db
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      JWT_SECRET: ${JWT_SECRET}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+      NODE_ENV: ${NODE_ENV:-production}
+
+  # MediaMTX - SRT/WebRTC 미디어 게이트웨이
+  mediamtx:
+    image: bluenviron/mediamtx:latest
+    container_name: returnfeed-mediamtx
+    ports:
+      - "8899:8889"      # WebRTC (HTTP)
+      - "8189:8189/udp"  # WebRTC (ICE)
+      - "8890:8890/udp"  # SRT
+      # - "1935:1935"      # RTMP (선택 사항)
+    volumes:
+      - ./mediamtx/mediamtx.yml:/mediamtx.yml:ro
+    networks:
+      - returnfeed-net
+    restart: unless-stopped
+
+  # Tally Relay Server - WebSocket 중계 서버
+  relay:
+    build:
+      context: ./relay
+    container_name: returnfeed-relay
+    networks:
+      - returnfeed-net
+    restart: unless-stopped
+    # NGINX를 통해 접근하므로 포트 노출은 필요 없습니다.
+
+  # PostgreSQL - 데이터베이스
+  db:
+    image: postgres:14-alpine
+    container_name: returnfeed-db
+    env_file:
+      - .env
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - returnfeed-net
+    restart: unless-stopped

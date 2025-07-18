@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ReturnFeed Staff</title>
+    
+    <!-- 폰트 로드 -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Gmarket+Sans+TTF:wght@500;700&display=swap" rel="stylesheet">
+    
+    <!-- HLS.js 라이브러리 (Fallback용) -->
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    
+    <style>
+        :root {
+            --color-pvw: #00A36C;
+            --color-pgm: #D41728;
+            --tally-border-width: 20px;
+            --color-blue: #00c6ff;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Gmarket Sans TTF', sans-serif;
+            background: #000000;
+            color: #ffffff;
+            overflow: hidden;
+            -webkit-tap-highlight-color: transparent;
+            overscroll-behavior: none;
+            -webkit-user-select: none;
+            user-select: none;
+            -webkit-touch-callout: none;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* 스플래시 화면 */
+        .splash-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: #000000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: opacity 0.5s ease-out;
+        }
+
+        .splash-screen.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .logo-container {
+            animation: pulse 2s infinite;
+            text-align: center;
+        }
+
+        .logo-text {
+            font-size: 48px;
+            font-weight: 700;
+            color: white;
+        }
+
+        .logo-text .feed {
+            color: var(--color-blue);
+        }
+
+        @keyframes pulse {
+            0%, 100% { 
+                opacity: 1; 
+                transform: scale(1);
+            }
+            50% { 
+                opacity: 0.8; 
+                transform: scale(1.05);
+            }
+        }
+
+        /* 설정 화면 */
+        .setup-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: #1a1a1a;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .setup-screen.active {
+            display: flex;
+        }
+
+        .setup-status {
+            font-size: 1.125rem;
+            color: #9ca3af;
+            margin-bottom: 2rem;
+            height: 1.75rem;
+        }
+
+        .setup-form {
+            width: 100%;
+            max-width: 24rem;
+        }
+
+        .setup-label {
+            display: block;
+            text-align: left;
+            font-size: 1.125rem;
+            font-weight: 500;
+            color: #e5e7eb;
+            margin-bottom: 0.75rem;
+        }
+
+        .setup-select {
+            background: #374151;
+            border: 2px solid #4b5563;
+            color: white;
+            font-size: 1.25rem;
+            border-radius: 0.5rem;
+            width: 100%;
+            padding: 1rem;
+            appearance: none;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .setup-select:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        /* 플레이어 화면 */
+        .player-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: #000000;
+            display: none;
+        }
+
+        .player-screen.active {
+            display: block;
+        }
+
+        /* 비디오 컨테이너 */
+        .video-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            background: #000000;
+            overflow: hidden;
+        }
+
+        .video-element {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            background: #000000;
+        }
+
+        /* 탈리 오버레이 */
+        .tally-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            pointer-events: none;
+            transition: all 0.3s ease;
+            opacity: 0;
+        }
+
+        .tally-overlay.active {
+            opacity: 1;
+        }
+
+        .tally-overlay.pgm {
+            box-shadow: inset 0 0 0 var(--tally-border-width) var(--color-pgm);
+        }
+
+        .tally-overlay.pvw {
+            box-shadow: inset 0 0 0 var(--tally-border-width) var(--color-pvw);
+        }
+
+        /* 탈리 표시기 */
+        .tally-indicator {
+            position: absolute;
+            top: calc(var(--tally-border-width) + 10px);
+            right: calc(var(--tally-border-width) + 10px);
+            padding: 8px 20px;
+            border-radius: 6px;
+            font-weight: 700;
+            font-size: 18px;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+            opacity: 0;
+            transform: translateY(-10px);
+            animation: blink 1s ease-in-out infinite;
+        }
+
+        .tally-indicator.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .tally-indicator.pgm {
+            background: var(--color-pgm);
+            color: white;
+        }
+
+        .tally-indicator.pvw {
+            background: var(--color-pvw);
+            color: white;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        /* 컨트롤 오버레이 */
+        .control-overlay {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 15px;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.8);
+            border-radius: 12px;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+            opacity: 0;
+        }
+
+        .control-overlay.visible {
+            opacity: 1;
+        }
+
+        .control-button {
+            width: 50px;
+            height: 50px;
+            border: none;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .control-button.active {
+            background: var(--color-blue);
+        }
+
+        .control-button:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        /* 상태 표시 */
+        .status-overlay {
+            position: absolute;
+            top: calc(var(--tally-border-width) + 10px);
+            left: calc(var(--tally-border-width) + 10px);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 15px;
+            background: rgba(0, 0, 0, 0.8);
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #6b7280;
+            transition: all 0.3s ease;
+        }
+
+        .status-dot.connected {
+            background: #10b981;
+            box-shadow: 0 0 10px #10b981;
+        }
+
+        .camera-number {
+            font-weight: 700;
+            color: var(--color-blue);
+        }
+    </style>
+</head>
+<body>
+    <!-- 스플래시 화면 -->
+    <div class="splash-screen" id="splashScreen">
+        <div class="logo-container">
+            <div class="logo-text">
+                Return<span class="feed">Feed</span>
+            </div>
+            <p style="margin-top: 20px; color: #666;">Loading...</p>
+        </div>
+    </div>
+
+    <!-- 설정 화면 -->
+    <div class="setup-screen" id="setupScreen">
+        <div class="logo-container">
+            <div class="logo-text">
+                Return<span class="feed">Feed</span>
+            </div>
+        </div>
+        <div class="setup-status" id="setupStatus">연결 대기 중...</div>
+        <div class="setup-form" id="setupForm">
+            <label class="setup-label" for="cameraSelect">담당 카메라 선택</label>
+            <select class="setup-select" id="cameraSelect">
+                <option value="">카메라를 선택하세요</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- 플레이어 화면 -->
+    <div class="player-screen" id="playerScreen">
+        <div class="video-container">
+            <video class="video-element" id="videoPlayer" playsinline muted></video>
+            <div class="tally-overlay" id="tallyOverlay"></div>
+            <div class="tally-indicator" id="tallyIndicator"></div>
+            <div class="status-overlay">
+                <div class="status-dot" id="connectionStatus"></div>
+                <span>Camera <span class="camera-number" id="cameraNumber">-</span></span>
+            </div>
+            <div class="control-overlay" id="controlOverlay">
+                <button class="control-button" id="vibrationToggle" title="진동">📳</button>
+                <button class="control-button" id="soundToggle" title="소리">🔊</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Extract session key from URL
+        const pathParts = window.location.pathname.split('/');
+        const sessionKey = pathParts[pathParts.length - 1] || pathParts[pathParts.length - 2];
+        
+        // Configuration
+        const CONFIG = {
+            sessionKey: sessionKey,
+            wsUrl: `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/ws`,
+            hlsUrl: `/mediamtx/session_${sessionKey}/index.m3u8`,
+            webrtcUrl: `/mediamtx/session_${sessionKey}/whep`
+        };
+
+        // State management
+        let ws = null;
+        let selectedCamera = null;
+        let programInput = null;
+        let previewInput = null;
+        let inputs = {};
+        let isVibrationEnabled = localStorage.getItem('vibrationEnabled') !== 'false';
+        let isSoundEnabled = localStorage.getItem('soundEnabled') !== 'false';
+        let controlTimeout = null;
+
+        // UI Elements
+        const splashScreen = document.getElementById('splashScreen');
+        const setupScreen = document.getElementById('setupScreen');
+        const playerScreen = document.getElementById('playerScreen');
+        const setupStatus = document.getElementById('setupStatus');
+        const cameraSelect = document.getElementById('cameraSelect');
+        const videoPlayer = document.getElementById('videoPlayer');
+        const tallyOverlay = document.getElementById('tallyOverlay');
+        const tallyIndicator = document.getElementById('tallyIndicator');
+        const connectionStatus = document.getElementById('connectionStatus');
+        const cameraNumber = document.getElementById('cameraNumber');
+        const controlOverlay = document.getElementById('controlOverlay');
+        const vibrationToggle = document.getElementById('vibrationToggle');
+        const soundToggle = document.getElementById('soundToggle');
+
+        // Initialize
+        async function init() {
+            console.log('Initializing ReturnFeed Staff with session:', CONFIG.sessionKey);
+            
+            // Hide splash after 1 second
+            setTimeout(() => {
+                splashScreen.classList.add('hidden');
+                setupScreen.classList.add('active');
+                connectWebSocket();
+            }, 1000);
+
+            // Setup controls
+            setupControls();
+            
+            // Check saved camera
+            const savedCamera = localStorage.getItem(`camera_${CONFIG.sessionKey}`);
+            if (savedCamera) {
+                selectedCamera = parseInt(savedCamera);
+            }
+        }
+
+        // WebSocket connection
+        function connectWebSocket() {
+            setupStatus.textContent = '서버 연결 중...';
+            
+            ws = new WebSocket(CONFIG.wsUrl);
+            
+            ws.onopen = () => {
+                console.log('WebSocket connected');
+                setupStatus.textContent = '연결 성공! 카메라 정보 수신 중...';
+                connectionStatus.classList.add('connected');
+                
+                // Register as staff
+                ws.send(JSON.stringify({
+                    type: 'register',
+                    sessionId: CONFIG.sessionKey,
+                    role: 'staff'
+                }));
+            };
+            
+            ws.onmessage = (event) => {
+                try {
+                    const data = JSON.parse(event.data);
+                    handleWebSocketMessage(data);
+                } catch (e) {
+                    console.error('Failed to parse message:', e);
+                }
+            };
+            
+            ws.onerror = (error) => {
+                console.error('WebSocket error:', error);
+                setupStatus.textContent = '연결 오류 발생';
+                connectionStatus.classList.remove('connected');
+            };
+            
+            ws.onclose = () => {
+                console.log('WebSocket disconnected');
+                setupStatus.textContent = '연결이 끊어졌습니다. 재연결 중...';
+                connectionStatus.classList.remove('connected');
+                
+                // Reconnect after 3 seconds
+                setTimeout(connectWebSocket, 3000);
+            };
+        }
+
+        // Handle WebSocket messages
+        function handleWebSocketMessage(data) {
+            switch (data.type) {
+                case 'session_registered':
+                    console.log('Session registered successfully');
+                    // 등록 완료 후 inputs 정보 요청
+                    if (ws && ws.readyState === WebSocket.OPEN) {
+                        ws.send(JSON.stringify({ type: 'get_inputs' }));
+                    }
+                    break;
+                    
+                case 'tally_update':
+                    programInput = data.program;
+                    previewInput = data.preview;
+                    
+                    // tally_update에서 inputs가 포함되어 있을 수 있음
+                    if (data.inputs && Object.keys(data.inputs).length > 0) {
+                        inputs = data.inputs;
+                        updateCameraList();
+                    }
+                    
+                    updateTally();
+                    break;
+                    
+                case 'inputs_update':
+                    // vMix에서 전송된 카메라 입력 리스트 업데이트
+                    console.log('Inputs updated from vMix:', data);
+                    if (data.inputs) {
+                        inputs = data.inputs;
+                        updateCameraList();
+                        setupStatus.textContent = `vMix 카메라 ${Object.keys(data.inputs).length}개 감지됨`;
+                        
+                        // vMix 버전 정보 표시
+                        if (data.vmixVersion) {
+                            console.log('vMix Version:', data.vmixVersion);
+                        }
+                    }
+                    break;
+                    
+                case 'inputs_list':
+                    // 기존 inputs 데이터 요청에 대한 응답
+                    if (data.inputs) {
+                        inputs = data.inputs;
+                        updateCameraList();
+                        if (Object.keys(data.inputs).length > 0) {
+                            setupStatus.textContent = `저장된 카메라 ${Object.keys(data.inputs).length}개 로드됨`;
+                        }
+                    }
+                    break;
+                    
+                case 'input_list':
+                    // 이전 버전과의 호환성을 위해 유지
+                    if (data.inputs) {
+                        inputs = data.inputs;
+                        updateCameraList();
+                    }
+                    break;
+                    
+                case 'error':
+                    console.error('Server error:', data.message);
+                    setupStatus.textContent = `오류: ${data.message}`;
+                    break;
+            }
+        }
+
+        // Update camera list with enhanced vMix input information
+        function updateCameraList() {
+            setupStatus.textContent = '카메라를 선택하세요';
+            
+            // Clear existing options
+            cameraSelect.innerHTML = '<option value="">카메라를 선택하세요</option>';
+            
+            // Sort inputs by number for consistent ordering
+            const sortedInputs = Object.entries(inputs).sort(([a], [b]) => parseInt(a) - parseInt(b));
+            
+            // Add camera options with enhanced information
+            sortedInputs.forEach(([number, inputData]) => {
+                const option = document.createElement('option');
+                option.value = number;
+                
+                // Handle both old format (string) and new format (object)
+                if (typeof inputData === 'string') {
+                    // Old format: inputs[number] = "Camera Name"
+                    option.textContent = `Camera ${number} - ${inputData}`;
+                } else if (typeof inputData === 'object' && inputData.title) {
+                    // New format: inputs[number] = {title, type, state, etc.}
+                    const title = inputData.title || inputData.name || `Input ${number}`;
+                    const type = inputData.type ? ` (${inputData.type})` : '';
+                    const state = inputData.state;
+                    
+                    // Show state indicator for active inputs
+                    let stateIndicator = '';
+                    if (state === 'Running') {
+                        stateIndicator = ' 🔴'; // Live indicator
+                    } else if (state === 'Paused') {
+                        stateIndicator = ' ⏸️'; // Paused indicator
+                    }
+                    
+                    option.textContent = `Camera ${number} - ${title}${type}${stateIndicator}`;
+                    
+                    // Add data attributes for additional information
+                    option.setAttribute('data-type', inputData.type || '');
+                    option.setAttribute('data-state', state || '');
+                } else {
+                    // Fallback for unknown format
+                    option.textContent = `Camera ${number} - Input ${number}`;
+                }
+                
+                cameraSelect.appendChild(option);
+            });
+            
+            // Add separator and special options if there are inputs
+            if (Object.keys(inputs).length > 0) {
+                // Add separator
+                const separator = document.createElement('option');
+                separator.disabled = true;
+                separator.textContent = '─────────────────';
+                cameraSelect.appendChild(separator);
+                
+                // Add "All Cameras" option for monitoring multiple inputs
+                const allOption = document.createElement('option');
+                allOption.value = 'all';
+                allOption.textContent = '🎥 모든 카메라 모니터링';
+                cameraSelect.appendChild(allOption);
+            } else {
+                // No inputs available
+                const noInputOption = document.createElement('option');
+                noInputOption.disabled = true;
+                noInputOption.textContent = 'vMix에서 카메라를 감지하는 중...';
+                cameraSelect.appendChild(noInputOption);
+            }
+            
+            // If camera was previously selected, auto-select and start
+            if (selectedCamera && (inputs[selectedCamera] || selectedCamera === 'all')) {
+                cameraSelect.value = selectedCamera;
+                startPlayer();
+            }
+        }
+
+        // Camera selection
+        cameraSelect.addEventListener('change', (e) => {
+            if (e.target.value) {
+                selectedCamera = parseInt(e.target.value);
+                localStorage.setItem(`camera_${CONFIG.sessionKey}`, selectedCamera);
+                startPlayer();
+            }
+        });
+
+        // Start player
+        async function startPlayer() {
+            if (!selectedCamera) return;
+            
+            console.log('Starting player for camera:', selectedCamera);
+            cameraNumber.textContent = selectedCamera;
+            
+            // Show player screen
+            setupScreen.classList.remove('active');
+            playerScreen.classList.add('active');
+            
+            // Start video stream
+            startVideoStream();
+            
+            // Update tally
+            updateTally();
+        }
+
+        // Start video stream (WebRTC first, fallback to HLS)
+        async function startVideoStream() {
+            try {
+                // Try WebRTC first
+                await startWebRTC();
+            } catch (e) {
+                console.error('WebRTC failed, falling back to HLS:', e);
+                startHLS();
+            }
+        }
+
+        // WebRTC implementation
+        async function startWebRTC() {
+            const pc = new RTCPeerConnection({
+                iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+            });
+            
+            pc.ontrack = (event) => {
+                videoPlayer.srcObject = event.streams[0];
+                videoPlayer.play();
+            };
+            
+            // Create offer
+            const offer = await pc.createOffer({
+                offerToReceiveVideo: true,
+                offerToReceiveAudio: true
+            });
+            
+            await pc.setLocalDescription(offer);
+            
+            // Send offer to WHEP endpoint
+            const response = await fetch(CONFIG.webrtcUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/sdp'
+                },
+                body: offer.sdp
+            });
+            
+            if (!response.ok) throw new Error('WHEP request failed');
+            
+            const answer = await response.text();
+            await pc.setRemoteDescription({
+                type: 'answer',
+                sdp: answer
+            });
+        }
+
+        // HLS fallback
+        function startHLS() {
+            if (Hls.isSupported()) {
+                const hls = new Hls();
+                hls.loadSource(CONFIG.hlsUrl);
+                hls.attachMedia(videoPlayer);
+                hls.on(Hls.Events.MANIFEST_PARSED, () => {
+                    videoPlayer.play();
+                });
+            } else if (videoPlayer.canPlayType('application/vnd.apple.mpegurl')) {
+                videoPlayer.src = CONFIG.hlsUrl;
+                videoPlayer.play();
+            }
+        }
+
+        // Update tally display
+        function updateTally() {
+            if (!selectedCamera) return;
+            
+            const isPgm = programInput === selectedCamera;
+            const isPvw = previewInput === selectedCamera;
+            
+            // Update overlay
+            tallyOverlay.classList.toggle('active', isPgm || isPvw);
+            tallyOverlay.classList.toggle('pgm', isPgm);
+            tallyOverlay.classList.toggle('pvw', isPvw);
+            
+            // Update indicator
+            tallyIndicator.classList.toggle('active', isPgm || isPvw);
+            tallyIndicator.classList.toggle('pgm', isPgm);
+            tallyIndicator.classList.toggle('pvw', isPvw);
+            tallyIndicator.textContent = isPgm ? 'ON AIR' : isPvw ? 'PREVIEW' : '';
+            
+            // Feedback
+            if (isPgm || isPvw) {
+                provideFeedback(isPgm ? 'pgm' : 'pvw');
+            }
+        }
+
+        // Provide feedback (vibration/sound)
+        function provideFeedback(type) {
+            // Vibration
+            if (isVibrationEnabled && 'vibrate' in navigator) {
+                const pattern = type === 'pgm' ? [200, 100, 200] : [100];
+                navigator.vibrate(pattern);
+            }
+            
+            // Sound (using speech synthesis)
+            if (isSoundEnabled && 'speechSynthesis' in window) {
+                const text = type === 'pgm' ? '프로그램' : '프리뷰';
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'ko-KR';
+                utterance.rate = 1.2;
+                speechSynthesis.speak(utterance);
+            }
+        }
+
+        // Setup controls
+        function setupControls() {
+            // Update button states
+            vibrationToggle.classList.toggle('active', isVibrationEnabled);
+            soundToggle.classList.toggle('active', isSoundEnabled);
+            
+            // Vibration toggle
+            vibrationToggle.addEventListener('click', () => {
+                isVibrationEnabled = !isVibrationEnabled;
+                localStorage.setItem('vibrationEnabled', isVibrationEnabled);
+                vibrationToggle.classList.toggle('active', isVibrationEnabled);
+            });
+            
+            // Sound toggle
+            soundToggle.addEventListener('click', () => {
+                isSoundEnabled = !isSoundEnabled;
+                localStorage.setItem('soundEnabled', isSoundEnabled);
+                soundToggle.classList.toggle('active', isSoundEnabled);
+            });
+            
+            // Show controls on tap
+            playerScreen.addEventListener('click', () => {
+                controlOverlay.classList.add('visible');
+                
+                // Hide after 3 seconds
+                clearTimeout(controlTimeout);
+                controlTimeout = setTimeout(() => {
+                    controlOverlay.classList.remove('visible');
+                }, 3000);
+            });
+        }
+
+        // Start the app
+        init();
+    </script>
+</body>
+</html>

@@ -1,0 +1,147 @@
+# MediaMTX Ultra-Low Latency Configuration for ReturnFeed
+# 목표: End-to-End 레이턴시 < 200ms
+
+# 글로벌 설정 - 최소 버퍼, 빠른 타임아웃
+logLevel: info
+logDestinations: [stdout]
+readTimeout: 5s
+writeTimeout: 5s
+writeQueueSize: 256          # 작은 큐 크기로 버퍼링 최소화
+udpMaxPayloadSize: 1472      # 표준 MTU
+readBufferCount: 512         # 적절한 버퍼 카운트
+
+# API 설정
+api: true
+apiAddress: 0.0.0.0:9997
+apiAllowOrigin: "*"
+
+# 메트릭 (레이턴시 모니터링용)
+metrics: true
+metricsAddress: 0.0.0.0:9998
+
+# SRT 서버 - 초저지연 설정
+srt: true
+srtAddress: :8890
+srtServerKey: secure_srt_key_2024    # 보안 키
+srtServerPassphrase: ReturnFeed2024  # 보안 패스프레이즈
+
+# 핵심 SRT 레이턴시 설정
+srtLatency: 50              # 50ms - LAN 환경 최적
+srtPeerIdleTimeout: 5s      # 빠른 연결 해제 감지
+srtMaxBandwidth: 0          # 무제한 (LAN 환경)
+srtRecvBuf: 4194304         # 4MB - 과도한 버퍼는 레이턴시 증가
+srtSendBuf: 4194304         # 4MB
+srtPayloadSize: 1316        # 표준 SRT 페이로드
+srtConnectionTimeout: 5s    # 빠른 연결 타임아웃
+srtOverheadBW: 25           # 25% 오버헤드
+srtPeerLatency: 50          # 피어 레이턴시도 50ms로 통일
+
+# WebRTC - 초저지연 설정
+webrtc: true
+webrtcAddress: :8889
+webrtcEncryption: optional
+webrtcAllowOrigin: "*"
+webrtcICETrustedIPs: ["192.168.0.0/16", "10.0.0.0/8"]
+webrtcLocalUDPAddress: :8189
+webrtcLocalTCPAddress: :8189
+
+# ICE 서버 - 로컬 우선
+webrtcICEServers2:
+  - url: "stun:stun.l.google.com:19302"
+  - url: "stun:stun1.l.google.com:19302"
+
+# WebRTC 최적화
+webrtcIPsFromInterfaces: true
+webrtcAdditionalHosts: []
+webrtcICEUDPMuxAddress: :8189
+webrtcICETCPMuxAddress: :8189
+
+# HLS 설정 (백업용, LL-HLS)
+hls: true
+hlsAddress: :8888
+hlsEncryption: false
+hlsAllowOrigin: "*"
+hlsAlwaysRemux: true
+hlsVariant: lowLatency      # Low-Latency HLS
+
+# LL-HLS 세그먼트 설정
+hlsSegmentCount: 3          # 최소 세그먼트
+hlsSegmentDuration: 500ms   # 0.5초 세그먼트
+hlsPartDuration: 100ms      # 100ms 파트
+hlsSegmentMaxSize: 5M       # 작은 세그먼트 크기
+
+# 기록 비활성화 (레이턴시 감소)
+record: false
+
+# 경로 설정
+paths:
+  # 모든 PD 세션 경로 (pd_로 시작)
+  "~^pd_.*":
+    # 소스 설정
+    source: publisher
+    sourceProtocol: srt
+    sourceOnDemand: false               # 항상 활성 (레이턴시 감소)
+    sourceOnDemandStartTimeout: 2s     # 빠른 시작
+    sourceOnDemandCloseAfter: 5s       # 빠른 종료
+    
+    # SRT 소스 최적화
+    srtReadPassphrase: ReturnFeed2024
+    
+    # 퍼블리시 설정
+    publishUser: pd_user
+    publishPass: secure_password
+    publishIPs: ["192.168.0.0/16", "10.0.0.0/8"]
+    
+    # 읽기 설정
+    readUser:
+    readPass:
+    readIPs: ["0.0.0.0/0"]  # 모든 IP 허용 (프론트엔드 접근)
+    
+    # 타임아웃 최적화
+    readTimeout: 5s
+    writeTimeout: 5s
+    writeQueueSize: 256
+    
+    # WebRTC 레이턴시 최적화
+    webrtcMaxMessageSize: 262144  # 256KB
+    
+    # HLS 레이턴시 최적화
+    hlsPartDuration: 100ms
+    hlsSegmentDuration: 500ms
+    
+    # 트랜스코딩 설정 (필요시)
+    runOnInit:
+    runOnInitRestart: false
+    
+    # 초기화 및 준비 이벤트
+    runOnDemand:
+    runOnDemandRestart: false
+    runOnDemandStartTimeout: 2s
+    runOnDemandCloseAfter: 5s
+    
+    # 연결 이벤트 (레이턴시 측정용)
+    runOnConnect:
+    runOnConnectRestart: false
+    runOnDisconnect:
+    
+    # 읽기/쓰기 이벤트 (레이턴시 로깅)
+    runOnRead: |
+      echo "[$(date +%s.%N)] Client connected: $MTX_PATH from $MTX_READER_IP (Protocol: $MTX_READER_PROTOCOL)"
+    runOnReadRestart: false
+    
+    runOnPublish: |
+      echo "[$(date +%s.%N)] Publishing started: $MTX_PATH from $MTX_PUBLISHER_IP"
+      # 백엔드 API에 스트림 시작 알림
+      curl -X POST http://backend:3001/api/mediamtx/publish \
+        -H "Content-Type: application/json" \
+        -d "{\"path\":\"$MTX_PATH\",\"ip\":\"$MTX_PUBLISHER_IP\",\"timestamp\":\"$(date +%s.%N)\"}"
+    runOnPublishRestart: false
+    
+    # 녹화 비활성화 (레이턴시 감소)
+    record: false
+    
+    # RTMP 백업 (비활성화)
+    rtmp: false
+    
+    # 오버라이드 설정
+    overridePublisher: true

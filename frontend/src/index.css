@@ -1,0 +1,7 @@
+/* Import global styles and design system */
+@import './styles/global.css';
+
+body {
+  margin: 0;
+  /* Font family is now handled by design tokens */
+}

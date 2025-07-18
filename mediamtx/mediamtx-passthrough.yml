@@ -1,0 +1,204 @@
+# MediaMTX Passthrough Configuration for ReturnFeed
+# 트랜스코딩 없이 초저지연 달성 (목표: <50ms)
+# 
+# 핵심: PD 소프트웨어에서 WebRTC 네이티브 코덱으로 인코딩하면
+#       MediaMTX는 단순히 프로토콜만 변환 (SRT → WebRTC)
+
+# 글로벌 설정 - 초저지연 최적화
+logLevel: info
+logDestinations: [stdout]
+
+# 타임아웃 설정 - 빠른 반응성
+readTimeout: 5s
+writeTimeout: 5s
+readBufferCount: 512          # 적절한 버퍼 (너무 작으면 패킷 손실)
+writeQueueSize: 128           # 작은 큐 (레이턴시 최소화)
+
+# API 설정
+api: true
+apiAddress: 0.0.0.0:9997
+apiAllowOrigin: "*"
+
+# 메트릭 (레이턴시 모니터링)
+metrics: true
+metricsAddress: 0.0.0.0:9998
+pprof: false                  # 프로덕션에서는 비활성화
+
+# SRT 서버 설정 - 초저지연
+srt: yes
+srtAddress: :8890
+
+# SRT 핵심 설정 (패스스루 모드)
+srtLatency: 20               # 20ms - LAN 환경 최소값
+srtMaxBandwidth: 0           # 무제한 (LAN)
+srtRecvBuf: 8388608          # 8MB - 적절한 버퍼
+srtSendBuf: 8388608          # 8MB
+srtPayloadSize: 1316         # 표준 MTU
+srtPeerIdleTimeout: 10s
+srtConnectionTimeout: 5s
+srtPeerLatency: 20           # 피어도 20ms
+
+# 보안 설정 (선택사항)
+srtServerKey: ""             # 암호화 비활성화 (LAN)
+srtServerPassphrase: ""      # 패스프레이즈 없음
+
+# WebRTC 서버 설정 - 패스스루 최적화
+webrtc: true
+webrtcAddress: :8889
+webrtcEncryption: optional   # 선택적 암호화
+webrtcServerKey: ""
+webrtcServerCert: ""
+webrtcAllowOrigin: "*"
+webrtcLocalUDPAddress: :8189
+webrtcLocalTCPAddress: ""    # TCP 비활성화 (UDP만 사용)
+
+# ICE 서버 설정
+webrtcICEServers2:
+  - url: "stun:stun.l.google.com:19302"
+
+# 네트워크 최적화
+webrtcIPsFromInterfaces: true
+webrtcAdditionalHosts: []
+webrtcICETrustedIPs: ["192.168.0.0/16", "10.0.0.0/8", "172.16.0.0/12"]
+
+# HLS 설정 (백업용, 비활성화 가능)
+hls: false                   # 레이턴시 때문에 비활성화
+hlsAddress: :8888
+hlsAlwaysRemux: false
+hlsSegmentCount: 0
+hlsSegmentDuration: "0s"
+hlsPartDuration: "0s"
+
+# RTSP/RTMP 비활성화 (사용하지 않음)
+rtsp: false
+rtmp: false
+
+# 경로 설정 - 패스스루 핵심
+paths:
+  # PD 세션 경로 패턴
+  "~^pd_.*":
+    # 소스 설정
+    source: publisher
+    sourceProtocol: automatic
+    sourceOnDemand: false               # 항상 활성
+    sourceOnDemandStartTimeout: 2s
+    sourceOnDemandCloseAfter: 10s
+    
+    # SRT 소스 설정
+    srtReadPassphrase: ""               # 패스프레이즈 없음
+    
+    # 패스스루 핵심 설정
+    # MediaMTX는 코덱이 WebRTC 호환이면 자동으로 패스스루
+    # H.264 baseline + Opus는 변환 없이 통과
+    
+    # 비트레이트 조정 비활성화 (패스스루)
+    # rembBitrate: 0                    # MediaMTX 최신 버전에서 지원
+    
+    # 퍼블리셔 설정
+    publishUser: ""                     # 인증 없음 (LAN)
+    publishPass: ""
+    publishIPs: ["192.168.0.0/16", "10.0.0.0/8", "127.0.0.1/32"]
+    overridePublisher: true             # 기존 퍼블리셔 덮어쓰기
+    
+    # 리더 설정
+    readUser: ""
+    readPass: ""
+    readIPs: ["0.0.0.0/0"]             # 모든 IP 허용
+    
+    # 타임아웃 최적화
+    readTimeout: 5s
+    writeTimeout: 5s
+    writeQueueSize: 128                 # 작은 큐
+    maxReaders: 100                     # 충분한 리더 수
+    
+    # WebRTC 설정
+    webrtcICEUDPMuxAddress: ""          # 기본값 사용
+    webrtcICETCPMuxAddress: ""
+    
+    # 이벤트 핸들러 (레이턴시 측정용)
+    runOnInit: ""
+    runOnInitRestart: false
+    
+    # 연결 이벤트
+    runOnConnect: |
+      echo "[PASSTHROUGH] Client connected: $MTX_CONN_ID from $MTX_CONN_IP"
+    runOnConnectRestart: false
+    runOnDisconnect: ""
+    
+    # 퍼블리시 이벤트 (레이턴시 타임스탬프)
+    runOnPublish: |
+      echo "[PASSTHROUGH] Stream started: $MTX_PATH at $(date +%s.%N)"
+      # 백엔드에 알림 (레이턴시 측정 시작)
+      curl -s -X POST http://backend:3001/api/mediamtx/passthrough/start \
+        -H "Content-Type: application/json" \
+        -d "{\"path\":\"$MTX_PATH\",\"timestamp\":\"$(date +%s.%N)\"}" || true
+    runOnPublishRestart: false
+    
+    # 읽기 이벤트
+    runOnRead: |
+      echo "[PASSTHROUGH] Reader connected: $MTX_PATH protocol=$MTX_READER_PROTOCOL"
+    runOnReadRestart: false
+    
+    # 녹화 비활성화 (레이턴시 최적화)
+    record: false
+    recordPath: ""
+    recordFormat: ""
+    recordPartDuration: "0s"
+    recordSegmentDuration: "0s"
+    recordDeleteAfter: 0
+    
+  # 테스트 경로 (개발용)
+  test_passthrough:
+    source: publisher
+    sourceProtocol: automatic
+    sourceOnDemand: true
+    
+    # 간단한 테스트 설정
+    rembBitrate: 0
+    maxReaders: 10
+    
+    runOnPublish: |
+      echo "[TEST] Passthrough test stream: $MTX_PATH"
+
+# 패스스루 검증 경로
+paths_defaults:
+  # 기본값 (모든 경로에 적용)
+  sourceRedirect: ""
+  disable: false
+  fallback: ""
+  
+  # 패스스루 기본값
+  rembBitrate: 0              # 비트레이트 조정 비활성화
+  
+  # 읽기/쓰기 기본값
+  readTimeout: 5s
+  writeTimeout: 5s
+  writeQueueSize: 128
+  
+# 성능 최적화 설정
+runOnInit: |
+  echo "=========================================="
+  echo "  MediaMTX Passthrough Mode Initialized   "
+  echo "=========================================="
+  echo "Configuration:"
+  echo "  - Transcoding: DISABLED"
+  echo "  - SRT Latency: 20ms"
+  echo "  - WebRTC Native Codecs: H.264 baseline + Opus"
+  echo "  - Target Latency: <50ms"
+  echo ""
+  echo "Make sure PD software outputs:"
+  echo "  - Video: H.264 baseline profile"
+  echo "  - Audio: Opus codec"
+  echo "=========================================="
+
+# 종료 시 정리
+runOnTerminate: |
+  echo "[PASSTHROUGH] MediaMTX shutting down..."
+
+# CPU 최적화
+cpuProfile: false
+runOnInitRestart: false
+
+# 메모리 최적화
+# Go 런타임은 자동으로 메모리를 관리하지만
+# 패스스루 모드에서는 메모리 사용량이 매우 적음

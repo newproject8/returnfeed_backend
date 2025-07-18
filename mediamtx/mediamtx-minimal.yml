@@ -1,0 +1,27 @@
+# MediaMTX Minimal Configuration for Simulcast
+
+logLevel: info
+
+api: yes
+apiAddress: :9997
+
+metrics: yes
+metricsAddress: :9998
+
+# WebRTC
+webrtc: yes
+webrtcAddress: :8889
+
+# SRT
+srt: yes
+srtAddress: :8890
+
+# Disable unused protocols
+rtspDisable: yes
+rtmpDisable: yes
+hlsDisable: yes
+
+# Simple path configuration
+paths:
+  all:
+    source: publisher

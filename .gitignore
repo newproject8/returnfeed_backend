@@ -1,0 +1,53 @@
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment
+.env
+.env.local
+.env.production.local
+
+# Logs
+logs/
+*.log
+
+# Frontend build
+frontend/dist/
+frontend/build/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Database
+*.db
+*.sqlite
+
+# Certificates
+nginx/certs/*.pem
+nginx/certs/*.key
+nginx/certs/*.crt
+nginx/certs/*.csr
+
+# Docker
+.docker/
+
+# Python
+__pycache__/
+*.py[cod]
+
+# Test
+coverage/
+.nyc_output/
+
+# MediaMTX binaries
+mediamtx/mediamtx
+mediamtx/*.exe

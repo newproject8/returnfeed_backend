@@ -1,0 +1,146 @@
+# MediaMTX 설정 - 간소화된 시뮬캐스트 (v4.2)
+# 목표: 2개 품질 스트림 (1Mbps, 0.1Mbps)으로 네트워크 적응성 제공
+
+# 로그 레벨
+logLevel: info
+logDestinations: [stdout]
+
+# API 서버
+api: yes
+apiAddress: :9997
+
+# 메트릭 서버
+metrics: yes
+metricsAddress: :9998
+
+# WebRTC 설정 - 시뮬캐스트 지원
+webrtc: yes
+webrtcAddress: :8889
+webrtcICEServers:
+  - stun:stun.l.google.com:19302
+
+# SRT 설정 - 시뮬캐스트 입력
+srt: yes
+srtAddress: :8890
+
+# 전역 설정
+rtspDisable: yes
+rtmpDisable: yes
+hlsDisable: yes
+
+# 경로 설정
+paths:
+  # 시뮬캐스트 고품질 스트림
+  ~^simulcast_.*_h$:
+    # High Quality: 640x360 @ 1Mbps
+    source: publisher
+    srtReadPassphrase: $SRT_PASSPHRASE
+    
+    webrtc: yes
+    webrtcICEServers:
+      - stun:stun.l.google.com:19302
+    
+    # 패스스루 모드 유지
+    webrtcCodecH264: yes
+    webrtcCodecOpus: yes
+    webrtcCodecVP8: no
+    webrtcCodecVP9: no
+    
+    runOnReady: |
+      echo "[SIMULCAST] High 품질 시작: $MTX_PATH"
+      echo "[SIMULCAST] 640x360 @ 1Mbps"
+      echo "[SIMULCAST] 고속 네트워크 환경용"
+
+  ~^simulcast_.*_l$:
+    # Low Quality: 640x360 @ 0.1Mbps (100kbps)
+    source: publisher
+    srtReadPassphrase: $SRT_PASSPHRASE
+    
+    webrtc: yes
+    webrtcICEServers:
+      - stun:stun.l.google.com:19302
+    
+    # 패스스루 모드 유지
+    webrtcCodecH264: yes
+    webrtcCodecOpus: yes
+    webrtcCodecVP8: no
+    webrtcCodecVP9: no
+    
+    runOnReady: |
+      echo "[SIMULCAST] Low 품질 시작: $MTX_PATH"
+      echo "[SIMULCAST] 640x360 @ 0.1Mbps (100kbps)"
+      echo "[SIMULCAST] 모바일/저속 네트워크용"
+
+  # 시뮬캐스트 번들 경로 (클라이언트 접속점)
+  ~^simulcast_bundle_.*$:
+    # 클라이언트가 접속하는 메인 경로
+    source: redirect
+    sourceRedirect: simulcast_$G1_h  # 기본으로 High 품질
+    
+    webrtc: yes
+    webrtcICEServers:
+      - stun:stun.l.google.com:19302
+    
+    # 시뮬캐스트 메타데이터
+    runOnConnect: |
+      echo "[SIMULCAST] 클라이언트 연결: $MTX_CONN_ID"
+      echo "[SIMULCAST] 사용 가능한 품질:"
+      echo "  - h: 1Mbps (고품질)"
+      echo "  - l: 0.1Mbps (저품질)"
+      
+      # 네트워크 상태에 따라 자동 선택됨
+
+# 간소화된 시뮬캐스트 설정
+pathDefaults:
+  # 소스 설정
+  sourceOnDemand: no  # 항상 활성
+  sourceOnDemandStartTimeout: 2s
+  sourceOnDemandCloseAfter: 10s
+  
+  # 리더 설정
+  readMaxSessionsPerPath: 100
+  
+  # 버퍼 설정 (빠른 품질 전환)
+  readBufferSize: 128KB  # 더 작은 버퍼
+  
+  # 타임아웃 설정
+  readTimeout: 10s
+  writeTimeout: 10s
+  writeQueueSize: 64  # 최소화
+
+# 시뮬캐스트 모니터링
+runOnInit: |
+  echo "[SIMULCAST] MediaMTX 간소화 시뮬캐스트 모드"
+  echo "[SIMULCAST] 2개 품질 레이어:"
+  echo "  - 1Mbps: 고품질 (WiFi/유선)"
+  echo "  - 0.1Mbps: 저품질 (모바일/저속)"
+  echo "[SIMULCAST] 동일 해상도 640x360 유지"
+
+# 품질 전환 로직
+runOnRead: |
+  echo "[SIMULCAST] 클라이언트 읽기: $MTX_READER_ID"
+  
+  # 클라이언트의 네트워크 상태를 기반으로
+  # WebRTC가 자동으로 적절한 품질 선택
+
+# 환경 변수
+env:
+  SRT_PASSPHRASE: ${SRT_PASSPHRASE}
+
+# 통계 수집
+runOnReload: |
+  echo "[SIMULCAST] 활성 시뮬캐스트 세션"
+  
+  # High 품질 스트림
+  echo "=== 1Mbps 스트림 ==="
+  curl -s http://localhost:9997/v3/paths/list | jq -r '.items[].name' | grep "_h$" | while read path; do
+    READERS=$(curl -s http://localhost:9997/v3/paths/get/$path | jq '.readers | length')
+    echo "  $path: $READERS 명 시청"
+  done
+  
+  # Low 품질 스트림
+  echo "=== 0.1Mbps 스트림 ==="
+  curl -s http://localhost:9997/v3/paths/list | jq -r '.items[].name' | grep "_l$" | while read path; do
+    READERS=$(curl -s http://localhost:9997/v3/paths/get/$path | jq '.readers | length')
+    echo "  $path: $READERS 명 시청"
+  done

@@ -1,0 +1,8 @@
+version: '3.8'
+
+services:
+  tally-relay-server:
+    build: .
+    container_name: tally-relay-server
+    network_mode: "host"
+    restart: unless-stopped

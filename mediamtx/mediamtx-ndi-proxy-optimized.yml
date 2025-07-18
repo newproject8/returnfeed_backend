@@ -1,0 +1,161 @@
+# MediaMTX 설정 - NDI Proxy 640x360 최적화
+# v4.1 - NDI Proxy 표준화 버전
+
+# 로그 레벨
+logLevel: info
+logDestinations: [stdout]
+
+# API 서버
+api: yes
+apiAddress: :9997
+
+# 메트릭 서버
+metrics: yes
+metricsAddress: :9998
+
+# WebRTC 설정
+webrtc: yes
+webrtcAddress: :8889
+webrtcICEServers:
+  - stun:stun.l.google.com:19302
+
+# SRT 설정 - NDI Proxy 입력 전용
+srt: yes
+srtAddress: :8890
+
+# 전역 설정
+rtspDisable: yes  # RTSP 비활성화 (불필요)
+rtmpDisable: yes  # RTMP 비활성화 (불필요)
+hlsDisable: yes   # HLS 비활성화 (WebRTC만 사용)
+
+# 경로 설정
+paths:
+  # NDI Proxy 전용 경로 (640x360 고정)
+  ~^ndi_proxy_.*:
+    source: publisher
+    sourceProtocol: srt
+    
+    # SRT 설정 최적화
+    srtReadPassphrase: $SRT_PASSPHRASE
+    srtLatency: 20               # 20ms - 최소 레이턴시
+    srtMaxbw: 1500000           # 1.5Mbps 최대 (여유분 포함)
+    srtConnectTimeout: 5s
+    srtPeerIdleTimeout: 60s
+    
+    # WebRTC 출력 설정
+    webrtc: yes
+    webrtcICEServers:
+      - stun:stun.l.google.com:19302
+    
+    # 녹화 비활성화 (레이턴시 우선)
+    record: no
+    
+    # 접근 제어
+    publishUser: $PUBLISH_USER
+    publishPass: $PUBLISH_PASS
+    publishIPs: []  # 모든 IP 허용
+    
+    readUser:
+    readPass:
+    readIPs: []     # 모든 IP 허용
+    
+    # 스트림 시작 시 실행
+    runOnReady: |
+      echo "[NDI Proxy] 스트림 시작: $MTX_PATH"
+      echo "[NDI Proxy] 해상도: 640x360, 최대 비트레이트: 1Mbps"
+      
+      # 성능 모니터링 시작
+      curl -X POST http://localhost:9997/v3/metrics/stream \
+        -H "Content-Type: application/json" \
+        -d '{
+          "path": "'$MTX_PATH'",
+          "resolution": "640x360",
+          "bitrate": "1000000",
+          "codec": "h264-baseline"
+        }'
+    
+    # 스트림 종료 시 실행
+    runOnNotReady: |
+      echo "[NDI Proxy] 스트림 종료: $MTX_PATH"
+      
+      # 성능 통계 기록
+      curl -X POST http://localhost:9997/v3/metrics/stream/end \
+        -H "Content-Type: application/json" \
+        -d '{
+          "path": "'$MTX_PATH'",
+          "duration": "'$MTX_DURATION'"
+        }'
+    
+    # 클라이언트 연결 시
+    runOnConnect: |
+      echo "[NDI Proxy] 클라이언트 연결: $MTX_CONN_ID from $MTX_CONN_IP"
+    
+    # 클라이언트 연결 해제 시
+    runOnDisconnect: |
+      echo "[NDI Proxy] 클라이언트 연결 해제: $MTX_CONN_ID"
+
+  # PGM 출력 전용 경로 (NDI Proxy 기반)
+  pgm_output:
+    source: redirect
+    sourceRedirect: ndi_proxy_pgm
+    
+    # WebRTC 전용 출력
+    webrtc: yes
+    webrtcICEServers:
+      - stun:stun.l.google.com:19302
+    
+    # 읽기 전용
+    publishUser: nobody
+    publishPass: nobody
+    
+    readUser:
+    readPass:
+    readIPs: []
+
+  # 탈리 정보 전용 경로 (데이터 채널)
+  tally_data:
+    source: publisher
+    sourceProtocol: webrtc
+    
+    # 데이터 채널만 사용
+    webrtc: yes
+    webrtcICEServers:
+      - stun:stun.l.google.com:19302
+    
+    # 양방향 통신 허용
+    publishUser:
+    publishPass:
+    readUser:
+    readPass:
+
+# 성능 최적화 설정
+pathDefaults:
+  # 소스 설정
+  sourceOnDemand: yes
+  sourceOnDemandStartTimeout: 10s
+  sourceOnDemandCloseAfter: 10s
+  
+  # 리더 설정
+  readMaxSessionsPerPath: 100  # PD당 최대 100명 스태프
+  
+  # 버퍼 설정 (최소화)
+  readBufferSize: 512KB        # 작은 버퍼로 레이턴시 감소
+  
+  # 타임아웃 설정
+  readTimeout: 10s
+  writeTimeout: 10s
+  writeQueueSize: 256          # 쓰기 큐 크기
+  
+  # GOP 설정
+  rtspRangeType: clock
+  rtspRangeFormat: npt
+
+# 리소스 제한
+maxSessions: 300               # 최대 300개 세션 (100 PD × 3 스트림)
+authMethods: [basic, digest]
+
+# 환경 변수
+env:
+  SRT_PASSPHRASE: ${SRT_PASSPHRASE}
+  PUBLISH_USER: ${PUBLISH_USER}
+  PUBLISH_PASS: ${PUBLISH_PASS}

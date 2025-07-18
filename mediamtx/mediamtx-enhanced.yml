@@ -1,0 +1,140 @@
+# MediaMTX Configuration File (v1.12.2 - Enhanced with WebRTC optimization and Authentication)
+# ReturnFeed Streaming Platform
+
+# --- Global Settings ---
+logLevel: info
+logDestinations: [stdout]
+readTimeout: 10s
+writeTimeout: 10s
+writeQueueSize: 1024
+udpMaxPayloadSize: 1472
+
+# --- API Settings (for monitoring and management) ---
+api: true
+apiAddress: 0.0.0.0:9997
+
+# --- Authentication Settings ---
+# HTTP-based authentication callback to backend
+authMethod: http
+authHTTPAddress: http://backend:3001/api/mediamtx/auth
+
+# --- SRT Server Settings ---
+srt: true
+srtAddress: :8890
+
+# --- WebRTC Server Settings ---
+webrtc: true
+webrtcAddress: :8889
+webrtcLocalUDPAddress: :8189
+webrtcIPsFromInterfaces: true # Automatically detect server IPs
+webrtcAdditionalHosts: ["returnfeed.net", "192.168.0.242"]
+webrtcAllowOrigin: "*"
+
+# ICE 서버 설정
+webrtcICEServers2:
+  - url: "stun:stun.l.google.com:19302"
+  - url: "stun:stun1.l.google.com:19302"
+  # TURN server for better connectivity through NAT/firewalls
+  # - url: "turn:turn.returnfeed.net:3478"
+  #   username: "${TURN_USER}"
+  #   password: "${TURN_PASS}"
+
+# --- RTSP Settings (disabled) ---
+rtsp: false
+
+# --- RTMP Settings (disabled) ---
+rtmp: false
+
+# --- HLS Settings (fallback option) ---
+hls: true
+hlsAddress: :8888
+hlsAlwaysRemux: true
+hlsSegmentCount: 5
+hlsSegmentDuration: 1s
+hlsPartDuration: 200ms
+hlsAllowOrigin: "*"
+
+# --- Path-specific Settings ---
+paths:
+  # Main streaming path with authentication
+  pgm_srt_raw:
+    source: srt://localhost:8890
+    sourceOnDemand: false
+    
+    # WebRTC specific settings for low latency
+    webrtcMaxMessageSize: 262144
+    
+    # Authentication hooks
+    readUser: any
+    readPass: any
+    readIPs: []
+    
+    # Publishing authentication (SRT input)
+    publishUser: any
+    publishPass: any
+    publishIPs: []
+    
+    # Enable recording (optional)
+    # record: true
+    # recordPath: /recordings/%path/%Y-%m-%d_%H-%M-%S.mp4
+    # recordFormat: mp4
+    # recordSegmentDuration: 60s
+    
+    # Transcoding settings for WebRTC compatibility
+    # Force audio transcoding from AAC to Opus for WebRTC
+    rpiCameraPipeline: |
+      ffmpeg -i rtsp://localhost:$RTSP_PORT/$RTSP_PATH
+      -c:v copy
+      -c:a libopus -b:a 128k
+      -f rtsp rtsp://localhost:$RTSP_PORT/$RTSP_PATH_OPUS
+    
+  # Test path without authentication (development only)
+  test:
+    source: srt://localhost:8890?streamid=test
+    sourceOnDemand: true
+    
+  # Dynamic paths for multi-user streaming
+  # Format: /user/{userId}/{streamKey}
+  "~^user/([^/]+)/([^/]+)$":
+    source: srt://localhost:8890?streamid=$2
+    sourceOnDemand: true
+    
+    # Path-specific authentication
+    readUser: any
+    readPass: any
+    
+    # Only the stream owner can publish
+    publishUser: $1
+    publishPass: $2
+
+# --- Metrics and Monitoring ---
+metrics: true
+metricsAddress: :9998
+pprof: false
+pprofAddress: :9999
+
+# --- Advanced Settings ---
+# Automatic stream termination after inactivity
+runOnDemand: []
+runOnDemandRestart: false
+runOnDemandStartTimeout: 10s
+runOnDemandCloseAfter: 10s
+
+# Hooks for stream events
+runOnInit: []
+runOnInitRestart: false
+
+# Stream lifecycle hooks
+runOnConnect: []
+runOnConnectRestart: false
+runOnDisconnect: []
+
+# Read/Publish hooks
+runOnRead: []
+runOnReadRestart: false
+runOnPublish: []
+runOnPublishRestart: false
+
+# Recording hooks
+runOnRecordSegmentCreate: []
+runOnRecordSegmentComplete: []

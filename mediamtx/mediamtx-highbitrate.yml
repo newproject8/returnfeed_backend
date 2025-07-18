@@ -1,0 +1,185 @@
+# MediaMTX Configuration File - High Bitrate Support (10-100 Mbps)
+# ReturnFeed Streaming Platform - Professional Broadcasting Grade
+
+# --- Global Settings ---
+logLevel: info
+logDestinations: [stdout]
+readTimeout: 30s
+writeTimeout: 30s
+writeQueueSize: 2048  # Increased for high bitrate streams
+udpMaxPayloadSize: 1472
+
+# --- Performance Tuning for High Bitrate ---
+# Buffer sizes optimized for 10-100 Mbps streams
+readBufferCount: 2048  # Increased buffer count
+runOnInit: |
+  # Set system buffer sizes for high throughput
+  sysctl -w net.core.rmem_max=134217728
+  sysctl -w net.core.wmem_max=134217728
+  sysctl -w net.ipv4.udp_mem="12582912 16777216 25165824"
+
+# --- API Settings ---
+api: true
+apiAddress: 0.0.0.0:9997
+
+# --- Authentication Settings ---
+authMethod: http
+authHTTPAddress: http://backend:3001/api/mediamtx/auth
+
+# --- SRT Server Settings ---
+srt: true
+srtAddress: :8890
+
+# SRT specific settings for high bitrate
+# These settings are critical for 10-100 Mbps streams
+srtMaxBandwidth: 120000000  # 120 Mbps max bandwidth
+srtRecvBuf: 67108864       # 64 MB receive buffer
+srtSendBuf: 67108864       # 64 MB send buffer
+srtPayloadSize: 1316       # MTU - 184 (SRT header)
+srtLatency: 200            # 200ms latency for reliability
+srtPeerIdleTimeout: 10s
+srtRecvBufferSize: 67108864  # 64MB buffer for high bitrate
+
+# --- WebRTC Server Settings ---
+webrtc: true
+webrtcAddress: :8889
+webrtcLocalUDPAddress: :8189
+webrtcIPsFromInterfaces: true
+webrtcAdditionalHosts: ["returnfeed.net", "192.168.0.242"]
+webrtcAllowOrigin: "*"
+
+# ICE servers configuration
+webrtcICEServers2:
+  - url: "stun:stun.l.google.com:19302"
+  - url: "stun:stun1.l.google.com:19302"
+
+# WebRTC performance settings for high bitrate
+webrtcICEUDPMuxAddress: :8189
+webrtcICETCPMuxAddress: :8189
+
+# --- HLS Settings (for high bitrate fallback) ---
+hls: true
+hlsAddress: :8888
+hlsAlwaysRemux: true
+hlsSegmentCount: 10        # More segments for high bitrate
+hlsSegmentDuration: 2s     # 2 second segments
+hlsPartDuration: 500ms
+hlsSegmentMaxSize: 50M     # 50MB max segment size for high bitrate
+hlsAllowOrigin: "*"
+
+# --- Path-specific Settings ---
+paths:
+  # Main professional broadcasting path
+  pgm_srt_raw:
+    source: srt://localhost:8890
+    sourceOnDemand: false
+    sourceOnDemandStartTimeout: 30s
+    sourceOnDemandCloseAfter: 30s
+    
+    # High bitrate specific settings
+    maxReaders: 100  # Support many viewers
+    srtReadPassphrase: ""  # Can be set for encryption
+    
+    # Authentication
+    readUser: any
+    readPass: any
+    readIPs: []
+    publishUser: any
+    publishPass: any
+    publishIPs: []
+    
+    # Transcoding settings for different bitrates
+    # Only transcode if necessary (e.g., for lower bitrate versions)
+    # Original high bitrate stream is passed through
+    runOnDemand: []
+    runOnDemandRestart: false
+    runOnDemandStartTimeout: 30s
+    runOnDemandCloseAfter: 30s
+    
+    # Recording settings for high bitrate
+    record: false  # Enable if needed
+    recordPath: /recordings/%path/%Y-%m-%d_%H-%M-%S-%f.mp4
+    recordFormat: fmp4
+    recordPartDuration: 10s
+    recordSegmentDuration: 1h
+    recordDeleteAfter: 720h  # 30 days
+    
+  # Dynamic paths for multiple PD users
+  # Format: /pd/{userId}/{streamKey}
+  "~^pd/([^/]+)/([^/]+)$":
+    source: srt://localhost:8890?streamid=$2
+    sourceOnDemand: true
+    sourceOnDemandStartTimeout: 30s
+    sourceOnDemandCloseAfter: 30s
+    
+    # Authentication for user-specific streams
+    readUser: any
+    readPass: any
+    publishUser: $1
+    publishPass: $2
+    
+    # High bitrate support
+    maxReaders: 50
+    srtReadPassphrase: ""
+    
+  # Test path for development (lower bitrate)
+  test:
+    source: srt://localhost:8890?streamid=test
+    sourceOnDemand: true
+    
+    # Lower settings for testing
+    maxReaders: 10
+
+# --- Metrics and Monitoring ---
+metrics: true
+metricsAddress: :9998
+pprof: false
+pprofAddress: :9999
+
+# --- Network Optimization ---
+# Settings for handling high bandwidth streams
+rtspAddress: :8554
+rtspDisable: true  # Disable unused protocols
+rtmpAddress: :1935
+rtmpDisable: true  # Disable unused protocols
+
+# --- Advanced Performance Settings ---
+# CPU and memory optimization
+cpuProfile: false
+runOnInitRestart: true
+
+# Stream health monitoring
+pathDefaults:
+  # Default settings for all paths
+  sourceRedirect: ""
+  disable: false
+  fallback: ""
+  
+  # Reader settings
+  srtReadPassphrase: ""
+  readTimeout: 30s
+  writeTimeout: 30s
+  
+  # Publisher settings  
+  overridePublisher: true
+  srtPublishPassphrase: ""
+  
+  # Performance
+  maxReaders: 100
+  
+# Hooks for monitoring high bitrate streams
+runOnReady: |
+  echo "Stream ready: $RTSP_PATH - Bitrate monitoring enabled"
+  
+runOnNotReady: |
+  echo "Stream not ready: $RTSP_PATH"
+  
+runOnRead: |
+  echo "Client reading: $RTSP_PATH from $RTSP_READER_IP"
+  
+runOnPublish: |
+  echo "Publishing started: $RTSP_PATH from $RTSP_PUBLISHER_IP"
+  # Could add bitrate monitoring here
+  
+runOnRecordSegmentCreate: |
+  echo "Recording segment created: $RTSP_PATH - Size: $(stat -c%s "$RECORD_SEGMENT_PATH") bytes"

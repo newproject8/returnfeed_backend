@@ -1,0 +1,153 @@
+/* 스태프 비트레이트 패널 */
+.staff-bitrate-panel {
+  position: fixed;
+  top: 80px;
+  right: 20px;
+  width: 360px;
+  background: rgba(0, 0, 0, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(10px);
+  z-index: 1000;
+  transition: all 0.3s ease;
+}
+
+.staff-bitrate-panel.minimized {
+  height: 60px;
+  overflow: hidden;
+}
+
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 12px 12px 0 0;
+}
+
+.panel-header h4 {
+  margin: 0;
+  color: white;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.panel-controls {
+  display: flex;
+  gap: 8px;
+}
+
+.minimize-btn,
+.close-btn {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.6);
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  transition: all 0.2s ease;
+}
+
+.minimize-btn:hover,
+.close-btn:hover {
+  color: white;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.panel-content {
+  padding: 0;
+}
+
+.panel-content .bitrate-controller {
+  border: none;
+  border-radius: 0 0 12px 12px;
+  background: transparent;
+  box-shadow: none;
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+  .staff-bitrate-panel {
+    position: fixed;
+    top: 60px;
+    right: 10px;
+    left: 10px;
+    width: auto;
+    max-width: none;
+  }
+  
+  .panel-header h4 {
+    font-size: 13px;
+  }
+  
+  .minimize-btn,
+  .close-btn {
+    padding: 6px 10px;
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .staff-bitrate-panel {
+    top: 50px;
+    right: 5px;
+    left: 5px;
+  }
+  
+  .panel-header {
+    padding: 8px 12px;
+  }
+  
+  .panel-header h4 {
+    font-size: 12px;
+  }
+}
+
+/* 다크 모드 */
+@media (prefers-color-scheme: dark) {
+  .staff-bitrate-panel {
+    background: rgba(0, 0, 0, 0.98);
+    border-color: rgba(255, 255, 255, 0.15);
+  }
+  
+  .panel-header {
+    background: rgba(0, 0, 0, 0.5);
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+}
+
+/* 고대비 모드 */
+@media (prefers-contrast: high) {
+  .staff-bitrate-panel {
+    background: #000;
+    border: 2px solid #fff;
+  }
+  
+  .panel-header {
+    background: #000;
+    border-color: #fff;
+  }
+  
+  .panel-header h4 {
+    color: #fff;
+  }
+  
+  .minimize-btn,
+  .close-btn {
+    color: #fff;
+    border: 1px solid #fff;
+  }
+}
+
+/* 모션 축소 */
+@media (prefers-reduced-motion: reduce) {
+  .staff-bitrate-panel,
+  .minimize-btn,
+  .close-btn {
+    transition: none;
+  }
+}

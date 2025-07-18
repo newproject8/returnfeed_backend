@@ -1,0 +1,433 @@
+/* 모바일 최적화 레이아웃 스타일 */
+.mobile-optimized-layout {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #000;
+  touch-action: pan-x pan-y;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+.content-area {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* 모바일 컨트롤 오버레이 */
+.mobile-controls-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  z-index: 100;
+  transition: opacity 0.3s ease;
+}
+
+.mobile-controls-overlay * {
+  pointer-events: auto;
+}
+
+/* 상단 컨트롤 바 */
+.top-controls {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 60px;
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.8), transparent);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 20px;
+  backdrop-filter: blur(10px);
+  z-index: 101;
+}
+
+.device-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.orientation-indicator {
+  font-size: 16px;
+}
+
+.resolution {
+  font-family: monospace;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.fullscreen-button {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: white;
+  font-size: 18px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(5px);
+}
+
+.fullscreen-button:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: scale(1.1);
+}
+
+.fullscreen-button:active {
+  transform: scale(0.95);
+}
+
+/* 하단 컨트롤 바 */
+.bottom-controls {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  min-height: 80px;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 0 20px 20px;
+  backdrop-filter: blur(10px);
+  z-index: 101;
+}
+
+.gesture-hints {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 15px;
+}
+
+.hint {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 11px;
+  font-weight: 400;
+}
+
+.status-indicators {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.connection-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 12px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.connection-status.active {
+  color: #00ff00;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  background: #00ff00;
+  border-radius: 50%;
+  box-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.connection-status.active .status-dot {
+  animation: pulse 1s infinite;
+}
+
+.battery-status {
+  font-size: 16px;
+  opacity: 0.8;
+}
+
+/* 제스처 피드백 */
+.gesture-feedback {
+  position: absolute;
+  pointer-events: none;
+  z-index: 1000;
+  animation: ripple 0.3s ease-out;
+}
+
+@keyframes ripple {
+  0% {
+    transform: scale(0.8);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1.2);
+    opacity: 0;
+  }
+}
+
+/* 디버그 오버레이 */
+.debug-overlay {
+  position: absolute;
+  top: 70px;
+  right: 20px;
+  background: rgba(0, 0, 0, 0.8);
+  color: #00ff00;
+  padding: 10px;
+  border-radius: 8px;
+  font-family: monospace;
+  font-size: 10px;
+  z-index: 1000;
+  border: 1px solid rgba(0, 255, 0, 0.3);
+}
+
+.debug-info div {
+  margin: 2px 0;
+}
+
+/* 디바이스별 스타일 */
+.mobile-optimized-layout.mobile {
+  /* 모바일 전용 스타일 */
+}
+
+.mobile-optimized-layout.mobile .top-controls {
+  height: 50px;
+  padding: 0 15px;
+}
+
+.mobile-optimized-layout.mobile .bottom-controls {
+  padding: 0 15px 15px;
+}
+
+.mobile-optimized-layout.mobile .device-info {
+  font-size: 11px;
+  gap: 8px;
+}
+
+.mobile-optimized-layout.mobile .fullscreen-button {
+  font-size: 16px;
+  padding: 6px 10px;
+}
+
+.mobile-optimized-layout.mobile .hint {
+  font-size: 10px;
+}
+
+.mobile-optimized-layout.tablet {
+  /* 태블릿 전용 스타일 */
+}
+
+.mobile-optimized-layout.tablet .top-controls {
+  height: 55px;
+  padding: 0 25px;
+}
+
+.mobile-optimized-layout.tablet .bottom-controls {
+  padding: 0 25px 25px;
+}
+
+.mobile-optimized-layout.desktop {
+  /* 데스크톱 전용 스타일 */
+}
+
+.mobile-optimized-layout.desktop .gesture-hints {
+  display: none;
+}
+
+/* 방향별 스타일 */
+.mobile-optimized-layout.portrait {
+  /* 세로 방향 스타일 */
+}
+
+.mobile-optimized-layout.portrait .top-controls {
+  height: 60px;
+}
+
+.mobile-optimized-layout.portrait .bottom-controls {
+  min-height: 100px;
+}
+
+.mobile-optimized-layout.landscape {
+  /* 가로 방향 스타일 */
+}
+
+.mobile-optimized-layout.landscape .top-controls {
+  height: 50px;
+}
+
+.mobile-optimized-layout.landscape .bottom-controls {
+  min-height: 70px;
+}
+
+.mobile-optimized-layout.landscape .gesture-hints {
+  flex-direction: row;
+  gap: 15px;
+  overflow-x: auto;
+  white-space: nowrap;
+}
+
+/* 전체화면 스타일 */
+.mobile-optimized-layout.fullscreen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 9999;
+}
+
+.mobile-optimized-layout.fullscreen .top-controls {
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.9), transparent);
+}
+
+.mobile-optimized-layout.fullscreen .bottom-controls {
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.9), transparent);
+}
+
+/* 컨트롤 숨김 상태 */
+.mobile-optimized-layout.controls-hidden .mobile-controls-overlay {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.mobile-optimized-layout.controls-hidden .mobile-controls-overlay * {
+  pointer-events: none;
+}
+
+/* 터치 디바이스 최적화 */
+@media (hover: none) and (pointer: coarse) {
+  .mobile-optimized-layout {
+    cursor: none;
+  }
+  
+  .fullscreen-button {
+    min-width: 44px;
+    min-height: 44px;
+  }
+  
+  .mobile-controls-overlay {
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+/* 고해상도 디스플레이 최적화 */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 2dppx) {
+  .mobile-optimized-layout {
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: optimize-contrast;
+  }
+  
+  .status-dot {
+    width: 6px;
+    height: 6px;
+  }
+  
+  .debug-overlay {
+    font-size: 9px;
+  }
+}
+
+/* 다크 모드 지원 */
+@media (prefers-color-scheme: dark) {
+  .mobile-optimized-layout {
+    background: #000;
+  }
+  
+  .top-controls {
+    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.9), transparent);
+  }
+  
+  .bottom-controls {
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.9), transparent);
+  }
+}
+
+/* 고대비 모드 지원 */
+@media (prefers-contrast: high) {
+  .mobile-controls-overlay {
+    background: rgba(0, 0, 0, 0.95);
+  }
+  
+  .fullscreen-button {
+    background: rgba(255, 255, 255, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.6);
+  }
+  
+  .connection-status {
+    background: rgba(0, 0, 0, 0.8);
+    padding: 4px 8px;
+    border-radius: 4px;
+  }
+}
+
+/* 접근성 향상 */
+@media (prefers-reduced-motion: reduce) {
+  .mobile-optimized-layout * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  
+  .gesture-feedback {
+    animation: none;
+  }
+  
+  .status-dot {
+    animation: none;
+  }
+}
+
+/* 배터리 절약 모드 */
+@media (prefers-reduced-motion: reduce) {
+  .mobile-optimized-layout {
+    will-change: auto;
+  }
+  
+  .mobile-controls-overlay {
+    will-change: auto;
+  }
+}
+
+/* 스크롤 최적화 */
+.mobile-optimized-layout {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
+/* iOS Safari 특별 처리 */
+@supports (-webkit-touch-callout: none) {
+  .mobile-optimized-layout {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+  }
+  
+  .mobile-optimized-layout.fullscreen {
+    -webkit-transform: translateZ(0);
+  }
+}
+
+/* Android Chrome 특별 처리 */
+@media screen and (-webkit-min-device-pixel-ratio: 0) {
+  .mobile-optimized-layout {
+    -webkit-backface-visibility: hidden;
+  }
+}

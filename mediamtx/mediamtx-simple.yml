@@ -1,0 +1,41 @@
+# Simple MediaMTX configuration for testing
+logLevel: info
+logDestinations: [stdout]
+
+# API
+api: true
+apiAddress: 0.0.0.0:9997
+
+# Metrics
+metrics: true
+metricsAddress: 0.0.0.0:9998
+
+# WebRTC
+webrtc: true
+webrtcAddress: :8889
+
+# HLS
+hls: true
+hlsAddress: :8888
+hlsAlwaysRemux: false
+hlsSegmentCount: 7
+hlsSegmentDuration: "1s"
+hlsPartDuration: "200ms"
+
+# RTSP (for testing)
+rtsp: true
+rtspAddress: :8554
+
+# SRT
+srt: yes
+srtAddress: :8890
+
+# Paths
+paths:
+  all:
+    # Allow publishing without authentication
+    publishUser: ""
+    publishPass: ""
+    # Allow reading without authentication
+    readUser: ""
+    readPass: ""
