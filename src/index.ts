@@ -6,10 +6,10 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import streamRoutes from './routes/stream';
 import passport from './config/passport';
-import authRoutes from './routes/auth';
+import authRoutes from './routes/auth-clean';
 import sessionRoutes from './routes/sessions';
 import pdSoftwareRoutes from './routes/pd-software';
-import pdAuthRoutes from './routes/pd-auth';
+import pdAuthRoutes from './routes/pd-auth-clean';
 import browserLaunchRoutes from './routes/browser-launch';
 import mediamtxAuthRoutes from './routes/mediamtx-auth';
 // import mediamtxRoutes from './routes/mediamtx';
@@ -57,58 +57,7 @@ app.get('/api/db-test', asyncHandler(async (req: Request, res: Response) => {
   client.release();
 }));
 
-// 사용자 회원가입
-app.post('/api/auth/register', asyncHandler(async (req: Request, res: Response) => {
-  const { username, password } = req.body;
-
-  if (!username || !password) {
-    // This will be caught by the global error handler, but returning early is fine.
-    return res.status(400).json({ message: 'Username and password are required.' });
-  }
-  
-  // Generate email from username for simplicity
-  const email = `${username}@returnfeed.local`;
-
-  const saltRounds = 10;
-  const passwordHash = await bcrypt.hash(password, saltRounds);
-
-  const newUser = await pool.query(
-    'INSERT INTO users (username, email, password_hash) VALUES ($1, $2, $3) RETURNING id, username, email, created_at',
-    [username, email, passwordHash]
-  );
-
-  res.status(201).json(newUser.rows[0]);
-}));
-
-// 사용자 로그인
-app.post('/api/auth/login', asyncHandler(async (req: Request, res: Response) => {
-  const { username, password } = req.body;
-
-  if (!username || !password) {
-    return res.status(400).json({ message: 'Username and password are required.' });
-  }
-
-  const result = await pool.query('SELECT * FROM users WHERE username = $1', [username]);
-  const user = result.rows[0];
-
-  if (!user) {
-    return res.status(401).json({ message: 'Invalid credentials.' });
-  }
-
-  const isPasswordValid = await bcrypt.compare(password, user.password_hash);
-
-  if (!isPasswordValid) {
-    return res.status(401).json({ message: 'Invalid credentials.' });
-  }
-
-  const token = jwt.sign(
-    { id: user.id, username: user.username },
-    process.env.JWT_SECRET || 'default-secret', // Fallback for safety, but secret should be set
-    { expiresIn: '1h' }
-  );
-
-  res.json({ token });
-}));
+// Email-based authentication routes are now handled in auth-clean.ts
 
 // Root route
 app.get('/', (req: Request, res: Response) => {
